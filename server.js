@@ -8,27 +8,30 @@ app.use(express.static(__dirname));
 
 app.post('/api/chat', async (req, res) => {
     try {
-        const apiKey = process.env.OPENROUTER_API_KEY;
+        const apiKey = process.env.GROQ_API_KEY;
         if (!apiKey) {
-            return res.status(500).json({ error: 'OPENROUTER_API_KEY no configurada en el servidor.' });
+            return res.status(500).json({ error: 'GROQ_API_KEY no configurada en el servidor.' });
         }
 
-        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        // Petición apuntando a la API de Groq
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
-                'HTTP-Referer': 'https://render.com',
-                'X-Title': 'QyrexAI Workspace'
+                'Content-Type': 'application/json'
             },
-            body: JSON.stringify(req.body)
+            body: JSON.stringify({
+                model: 'llama-3.3-70b-versatile', // O un modelo rápido como 'llama3-8b-8192'
+                messages: req.body.messages,
+                temperature: req.body.temperature || 0.7
+            })
         });
 
         const data = await response.json();
         res.status(response.status).json(data);
     } catch (error) {
-        console.error('Error en el proxy:', error);
-        res.status(500).json({ error: 'Error interno al comunicarse con OpenRouter.' });
+        console.error('Error en el proxy de Groq:', error);
+        res.status(500).json({ error: 'Error interno al comunicarse con Groq.' });
     }
 });
 
