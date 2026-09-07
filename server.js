@@ -10,10 +10,9 @@ app.post('/api/chat', async (req, res) => {
     try {
         const apiKey = process.env.GROQ_API_KEY;
         if (!apiKey) {
-            return res.status(500).json({ error: 'GROQ_API_KEY no configurada en el servidor.' });
+            return res.status(500).json({ error: 'GROQ_API_KEY no configurada en las variables de entorno de Render.' });
         }
 
-        // Petición apuntando a la API de Groq
         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -21,7 +20,7 @@ app.post('/api/chat', async (req, res) => {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                model: 'llama-3.3-70b-versatile', // O un modelo rápido como 'llama3-8b-8192'
+                model: req.body.model || 'llama-3.3-70b-versatile',
                 messages: req.body.messages,
                 temperature: req.body.temperature || 0.7
             })
