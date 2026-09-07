@@ -1,16 +1,30 @@
 // ---------------------------------------------------------------
-// server.js   (versión completa y robusta)
+// server.js   (versión final con fallback de fetch)
 // ---------------------------------------------------------------
 
-require('dotenv').config();                 // Carga .env (solo en desarrollo)
+require('dotenv').config();                 // Carga .env
 const express = require('express');
 const path = require('path');
 
-// Compatibilidad con Node < 18 (fetch nativo) y Node >= 18
-// Si tu versión de Node tiene fetch nativo, puedes eliminar esta línea.
-const fetch = (...args) =>
-  import('node-fetch')
-    .then(({ default: fetch }) => fetch(...args));
+// ---------------------------------------------------------------
+// 0️⃣  FETCH – fallback entre nativo y node-fetch
+// ---------------------------------------------------------------
+let fetchFn;
+
+// Si el runtime ya expone fetch (Node >= 18) → lo usamos directamente.
+if (typeof fetch === 'function') {
+  fetchFn = fetch;
+} else {
+  // En versiones antiguas intentamos cargar node-fetch@2 (CommonJS)
+  try {
+    // require funciona porque la v2 exporta la función directamente.
+    fetchFn = require('node-fetch');
+  } catch (e) {
+    console.error('❌ No se encontró node-fetch y el runtime no tiene fetch nativo.');
+    console.error('   Instala node-fetch@2 o usa Node >= 18.');
+    process.exit(1); // abortamos porque no podemos continuar.
+  }
+}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -18,7 +32,7 @@ const PORT = process.env.PORT || 3000;
 // ---------------------------------------------------------------
 // 1️⃣ CONFIGURACIÓN BÁSICA
 // ---------------------------------------------------------------
-app.use(express.json({ limit: '10mb' }));   // Cuerpo máximo 10 MB
+app.use(express.json({ limit: '10mb' }));
 app.use(express.static(__dirname));         // Archivos estáticos (frontend)
 
 // ---------------------------------------------------------------
