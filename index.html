@@ -1,983 +1,352 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="es" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QyrexAI Workspace</title>
-    
-    <!-- Tailwind CSS -->
+    <title>AI Workspace</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        dark: {
-                            900: '#0b0f19',
-                            800: '#111827',
-                            700: '#1f2937',
-                            600: '#374151',
-                            500: '#4b5563',
-                        },
-                        brand: {
-                            500: '#6366f1',
-                            600: '#4f46e5',
-                            700: '#4338ca',
+                        gemini: {
+                            bg: '#131314',
+                            sidebar: '#1e1f20',
+                            card: '#1e1f20',
+                            input: '#2d2e31',
+                            border: '#333538',
+                            hover: '#37393e',
+                            text: '#e3e3e3',
+                            muted: '#c4c7c5'
                         }
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        mono: ['Fira Code', 'monospace']
                     }
                 }
             }
         }
     </script>
-    
-    <!-- Google Fonts & FontAwesome -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Marked.js & Highlight.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-
-    <!-- Custom Styling & Scrollbars -->
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0b0f19;
-            color: #f3f4f6;
-        }
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #111827;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #374151;
-            border-radius: 3px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #4b5563;
-        }
-        .code-block-container {
-            position: relative;
-            margin: 1rem 0;
-            border-radius: 0.5rem;
-            overflow: hidden;
-            background: #1e1e2e;
-            border: 1px solid #313244;
-        }
-        .code-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #181825;
-            padding: 0.5rem 1rem;
-            font-size: 0.8rem;
-            color: #a6adc8;
-            border-bottom: 1px solid #313244;
-        }
-        .copy-code-btn {
-            background: #313244;
-            color: #cdd6f4;
-            border: none;
-            padding: 0.25rem 0.6rem;
-            border-radius: 0.25rem;
-            cursor: pointer;
-            font-size: 0.75rem;
-            transition: all 0.2s;
-        }
-        .copy-code-btn:hover {
-            background: #45475a;
-            color: #fff;
-        }
-        pre code {
-            display: block;
-            padding: 1rem;
-            overflow-x: auto;
-            font-family: 'Fira Code', monospace;
-            font-size: 0.875rem;
-            line-height: 1.5;
-        }
-        .markdown-body p { margin-bottom: 0.75rem; }
-        .markdown-body p:last-child { margin-bottom: 0; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #444746; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555857; }
+        .markdown-body pre { background: #1e1f20; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin-top: 0.5rem; margin-bottom: 0.5rem; border: 1px solid #333538; position: relative; }
+        .markdown-body code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.875rem; color: #e3e3e3; }
+        .markdown-body p { margin-bottom: 0.75rem; line-height: 1.6; }
         .markdown-body ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 0.75rem; }
         .markdown-body ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 0.75rem; }
-        .markdown-body h1, .markdown-body h2, .markdown-body h3 { font-weight: 700; margin-top: 1rem; margin-bottom: 0.5rem; }
-        .markdown-body h1 { font-size: 1.5rem; }
-        .markdown-body h2 { font-size: 1.25rem; }
-        .markdown-body h3 { font-size: 1.1rem; }
-        .markdown-body blockquote { border-left: 3px solid #6366f1; padding-left: 1rem; color: #9ca3af; margin: 0.75rem 0; }
-        .markdown-body table { width: 100%; border-collapse: collapse; margin: 0.75rem 0; }
-        .markdown-body th, .markdown-body td { border: 1px solid #374151; padding: 0.5rem; text-align: left; }
-        .markdown-body th { background-color: #1f2937; }
+        .markdown-body h1, .markdown-body h2, .markdown-body h3 { font-weight: 600; margin-top: 1rem; margin-bottom: 0.5rem; color: #f1f3f4; }
     </style>
 </head>
-<body class="h-screen flex overflow-hidden">
+<body class="h-full bg-gemini-bg text-gemini-text font-sans antialiased overflow-hidden flex">
 
     <!-- Sidebar -->
-    <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-72 bg-dark-800 border-r border-dark-700 flex flex-col transition-transform duration-300 transform -translate-x-full md:translate-x-0 md:static">
-        <!-- Sidebar Header -->
-        <div class="p-4 border-b border-dark-700 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                    <i class="fa-solid fa-cube text-white text-lg"></i>
-                </div>
-                <div>
-                    <h1 class="font-bold text-base tracking-wide text-white">QyrexAI</h1>
-                    <span class="text-xs text-indigo-400 font-medium">Workspace v2.5</span>
-                </div>
-            </div>
-            <button id="close-sidebar" class="md:hidden text-gray-400 hover:text-white p-1 rounded-lg">
-                <i class="fa-solid fa-xmark text-lg"></i>
+    <aside id="sidebar" class="w-64 bg-gemini-sidebar flex flex-col transition-all duration-300 z-20 border-r border-gemini-border h-full">
+        <div class="p-4 flex items-center justify-between">
+            <button onclick="newChat()" class="flex items-center gap-2 bg-[#2d2e31] hover:bg-gemini-hover text-gemini-text px-4 py-2.5 rounded-full text-sm font-medium transition-colors border border-gemini-border w-full justify-center">
+                <i class="fa-solid fa-plus"></i> Nuevo chat
+            </button>
+            <button onclick="toggleSidebar()" class="text-gemini-muted hover:text-white p-2 rounded-lg ml-2 lg:hidden">
+                <i class="fa-solid fa-bars"></i>
             </button>
         </div>
+        
+        <div class="px-3 py-2 text-xs font-semibold text-gemini-muted uppercase tracking-wider">Recientes</div>
+        
+        <div id="chatHistoryList" class="flex-1 overflow-y-auto px-2 space-y-1"></div>
 
-        <!-- New Chat Button -->
-        <div class="p-3">
-            <button id="new-chat-btn" class="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-medium py-2.5 px-4 rounded-xl shadow-md shadow-indigo-500/15 transition-all duration-200">
-                <i class="fa-solid fa-plus text-sm"></i>
-                <span>New Conversation</span>
-            </button>
-        </div>
-
-        <!-- Chat History List -->
-        <div class="flex-1 overflow-y-auto px-3 py-2 space-y-1" id="chat-history-list">
-            <!-- Dynamically populated -->
-        </div>
-
-        <!-- Sidebar Footer Controls -->
-        <div class="p-3 border-t border-dark-700 space-y-2 bg-dark-900/50">
-            <button id="open-scratchpad-btn" class="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-dark-700/60 rounded-lg transition-colors">
-                <span class="flex items-center space-x-2.5">
-                    <i class="fa-solid fa-note-sticky text-indigo-400"></i>
-                    <span>Scratchpad</span>
-                </span>
-                <span class="text-xs bg-dark-700 text-gray-400 px-1.5 py-0.5 rounded">Ctrl+S</span>
-            </button>
-            <button id="export-json-btn" class="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-dark-700/60 rounded-lg transition-colors">
-                <span class="flex items-center space-x-2.5">
-                    <i class="fa-solid fa-file-arrow-down text-emerald-400"></i>
-                    <span>Export Chats (JSON)</span>
-                </span>
-            </button>
-            <button id="settings-btn" class="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-dark-700/60 rounded-lg transition-colors">
-                <span class="flex items-center space-x-2.5">
-                    <i class="fa-solid fa-gear text-purple-400"></i>
-                    <span>Settings & API Key</span>
-                </span>
+        <div class="p-4 border-t border-gemini-border flex items-center justify-between text-xs text-gemini-muted">
+            <span>Groq Backend</span>
+            <button onclick="clearAllChats()" class="hover:text-red-400 transition-colors" title="Borrar todo">
+                <i class="fa-solid fa-trash"></i>
             </button>
         </div>
     </aside>
 
-    <!-- Main Content -->
-    <main class="flex-1 flex flex-col h-full bg-dark-900 relative overflow-hidden">
-        <!-- Top Navigation Bar -->
-        <header class="h-14 border-b border-dark-700/80 bg-dark-800/80 backdrop-blur flex items-center justify-between px-4 z-10">
-            <div class="flex items-center space-x-3">
-                <button id="toggle-sidebar" class="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-dark-700 transition-colors">
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col h-full relative">
+        <!-- Top Bar -->
+        <header class="h-14 border-b border-gemini-border flex items-center justify-between px-4 bg-gemini-bg z-10">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleSidebar()" class="text-gemini-muted hover:text-white p-2 rounded-lg">
                     <i class="fa-solid fa-bars text-lg"></i>
                 </button>
-                <!-- Model Switcher -->
-                <div class="relative">
-                    <select id="model-select" class="bg-dark-700/90 text-gray-200 text-xs md:text-sm font-medium py-1.5 pl-3 pr-8 rounded-lg border border-dark-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer appearance-none">
-                        <option value="google/gemini-2.5-flash">Gemini 2.5 Flash (Google)</option>
-                        <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet (Anthropic)</option>
-                        <option value="openai/gpt-4o">GPT-4o (OpenAI)</option>
-                        <option value="deepseek/deepseek-chat">DeepSeek V3 (DeepSeek)</option>
-                        <option value="meta-llama/llama-3.3-70b-instruct">Llama 3.3 70B (Meta)</option>
-                    </select>
-                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-                        <i class="fa-solid fa-chevron-down text-xs"></i>
-                    </div>
-                </div>
+                <span class="font-medium text-lg text-white tracking-wide">AI Workspace</span>
             </div>
-
-            <!-- Top Actions -->
-            <div class="flex items-center space-x-2">
-                <button id="clear-current-chat" title="Clear Chat Messages" class="text-gray-400 hover:text-red-400 p-2 rounded-lg hover:bg-dark-700 transition-colors text-sm">
-                    <i class="fa-solid fa-trash-can"></i>
-                </button>
-                <button id="top-settings-btn" title="Settings" class="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-dark-700 transition-colors text-sm">
-                    <i class="fa-solid fa-gear"></i>
-                </button>
+            <div class="flex items-center gap-2">
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-[#2d2e31] text-emerald-400 border border-gemini-border">
+                    <span class="w-2 h-2 mr-1.5 bg-emerald-500 rounded-full animate-pulse"></span> Llama 3.3 Versatile
+                </span>
             </div>
         </header>
 
-        <!-- Chat Message Area -->
-        <div id="chat-container" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
-            <!-- Welcome / Empty State -->
-            <div id="empty-state" class="h-full flex flex-col items-center justify-center text-center max-w-lg mx-auto space-y-4">
-                <div class="w-16 h-16 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 text-2xl shadow-xl shadow-indigo-500/5">
+        <!-- Chat Container -->
+        <div id="chatContainer" class="flex-1 overflow-y-auto px-4 py-6 space-y-6 flex flex-col items-center">
+            <div id="welcomeScreen" class="my-auto text-center max-w-xl mx-auto space-y-4 px-4">
+                <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center mx-auto text-white text-xl shadow-lg">
                     <i class="fa-solid fa-sparkles"></i>
                 </div>
-                <h2 class="text-xl font-bold text-white">Welcome to QyrexAI Workspace</h2>
-                <p class="text-sm text-gray-400">Your advanced multimodal AI playground powered by OpenRouter. Upload documents/images, write code, query state-of-the-art models, and export your sessions effortlessly.</p>
-                
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full pt-4">
-                    <button class="quick-prompt text-left p-3 rounded-xl bg-dark-800 hover:bg-dark-700 border border-dark-700 text-xs text-gray-300 transition-all hover:border-indigo-500/50">
-                        <span class="font-semibold text-white block mb-1"><i class="fa-solid fa-code text-indigo-400 mr-1.5"></i> Refactor Code</span>
-                        Write a clean Python async script with robust error handling.
-                    </button>
-                    <button class="quick-prompt text-left p-3 rounded-xl bg-dark-800 hover:bg-dark-700 border border-dark-700 text-xs text-gray-300 transition-all hover:border-indigo-500/50">
-                        <span class="font-semibold text-white block mb-1"><i class="fa-solid fa-image text-emerald-400 mr-1.5"></i> Vision Analysis</span>
-                        Upload an architectural diagram or photo for detailed breakdown.
-                    </button>
-                </div>
+                <h1 class="text-3xl font-bold text-white">¿En qué puedo ayudarte hoy?</h1>
+                <p class="text-gemini-muted text-sm">Pregúntame sobre código, desarrollo web o cualquier consulta técnica.</p>
             </div>
-            <!-- Messages injected dynamically here -->
+
+            <div id="messagesList" class="w-full max-w-3xl space-y-6 hidden"></div>
         </div>
 
-        <!-- Input Footer -->
-        <div class="p-4 md:p-6 bg-dark-900 border-t border-dark-700/80">
-            <div class="max-w-4xl mx-auto">
-                <!-- File Preview Container -->
-                <div id="attachment-preview-container" class="flex flex-wrap gap-2 mb-2 empty:mb-0"></div>
-
-                <!-- Input Box Form -->
-                <form id="chat-form" class="bg-dark-800 border border-dark-700 rounded-2xl shadow-lg focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition-all overflow-hidden flex flex-col">
-                    <textarea 
-                        id="user-input" 
-                        rows="1" 
-                        placeholder="Message QyrexAI (Shift+Enter for newline)..." 
-                        class="w-full bg-transparent text-gray-100 placeholder-gray-500 p-3.5 focus:outline-none resize-none max-h-40 text-sm"
-                    ></textarea>
-
-                    <div class="flex items-center justify-between px-3 py-2 bg-dark-800/80 border-t border-dark-700/50">
-                        <div class="flex items-center space-x-2">
-                            <!-- File Upload Button -->
-                            <input type="file" id="file-upload" class="hidden" multiple accept="image/*,.txt,.md,.js,.json,.py,.html,.css">
-                            <button type="button" id="upload-btn" title="Attach Image or File" class="text-gray-400 hover:text-indigo-400 p-2 rounded-lg hover:bg-dark-700 transition-colors text-sm">
-                                <i class="fa-solid fa-paperclip"></i>
-                            </button>
-                            <span id="file-counter" class="text-xs text-gray-500 hidden">0 files attached</span>
+        <!-- Input Area -->
+        <div class="p-4 bg-gemini-bg border-t border-gemini-border flex flex-col items-center">
+            <div class="w-full max-w-3xl relative">
+                <form id="chatForm" onsubmit="handleSendMessage(event)" class="bg-gemini-input rounded-2xl border border-gemini-border focus-within:border-gray-500 transition-colors flex flex-col shadow-lg">
+                    <textarea id="userInput" rows="1" placeholder="Escribe un mensaje aquí..." class="w-full bg-transparent text-gemini-text placeholder-gemini-muted px-4 py-3.5 focus:outline-none resize-none max-h-48 text-sm" onkeydown="handleKeyDown(event)" oninput="autoResize(this)"></textarea>
+                    
+                    <div class="flex items-center justify-between px-3 pb-3">
+                        <div class="flex items-center gap-2 text-gemini-muted text-sm">
+                            <span class="text-xs">Presiona Enter ↵ para enviar</span>
                         </div>
-
-                        <div class="flex items-center space-x-2">
-                            <button type="submit" id="send-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors flex items-center space-x-2 shadow-md shadow-indigo-600/20 disabled:opacity-50 disabled:cursor-not-allowed">
-                                <span>Send</span>
-                                <i class="fa-solid fa-arrow-up text-xs"></i>
-                            </button>
-                            <button type="button" id="stop-btn" class="hidden bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors flex items-center space-x-2">
-                                <span>Stop</span>
-                                <i class="fa-solid fa-stop text-xs"></i>
-                            </button>
-                        </div>
+                        <button type="submit" id="sendButton" class="bg-white text-black hover:bg-gray-200 p-2 rounded-full w-9 h-9 flex items-center justify-center transition-colors disabled:opacity-40">
+                            <i class="fa-solid fa-arrow-up text-sm"></i>
+                        </button>
                     </div>
                 </form>
-                <div class="text-center mt-2">
-                    <span class="text-[11px] text-gray-500">QyrexAI Workspace can make mistakes. Verify critical code and prompts.</span>
-                </div>
+            </div>
+            <div class="text-center text-xs text-gemini-muted mt-2">
+                Las respuestas son generadas por IA y pueden requerir validación.
             </div>
         </div>
     </main>
 
-    <!-- Settings Modal -->
-    <div id="settings-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-dark-800 border border-dark-700 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden">
-            <div class="p-4 border-b border-dark-700 flex items-center justify-between">
-                <h3 class="font-bold text-white flex items-center space-x-2">
-                    <i class="fa-solid fa-gear text-indigo-400"></i>
-                    <span>Workspace Settings & API Key</span>
-                </h3>
-                <button id="close-settings" class="text-gray-400 hover:text-white p-1 rounded-lg">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-            <div class="p-6 space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1.5">OpenRouter API Key</label>
-                    <input type="password" id="api-key-input" placeholder="sk-or-v1-..." class="w-full bg-dark-900 border border-dark-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <p class="text-[11px] text-gray-500 mt-1">Get your key free/paid from <a href="https://openrouter.ai/keys" target="_blank" class="text-indigo-400 underline">openrouter.ai/keys</a>. Stored locally in browser.</p>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1.5">System Prompt</label>
-                    <textarea id="system-prompt-input" rows="3" class="w-full bg-dark-900 border border-dark-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">You are QyrexAI, an expert senior software engineer and AI assistant built for advanced problem solving, coding, and technical analysis.</textarea>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1.5">Temperature (<span id="temp-val">0.7</span>)</label>
-                    <input type="range" id="temperature-input" min="0" max="1" step="0.05" value="0.7" class="w-full accent-indigo-500">
-                </div>
-            </div>
-            <div class="p-4 border-t border-dark-700 bg-dark-900/50 flex justify-end space-x-3">
-                <button id="save-settings" class="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded-xl text-sm font-medium transition-colors shadow-lg shadow-indigo-600/25">Save Settings</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Scratchpad Modal / Drawer -->
-    <div id="scratchpad-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-dark-800 border border-dark-700 w-full max-w-2xl h-[80vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
-            <div class="p-4 border-b border-dark-700 flex items-center justify-between bg-dark-900/50">
-                <h3 class="font-bold text-white flex items-center space-x-2">
-                    <i class="fa-solid fa-note-sticky text-indigo-400"></i>
-                    <span>Scratchpad Workspace</span>
-                </h3>
-                <div class="flex items-center space-x-2">
-                    <button id="copy-scratchpad" title="Copy Content" class="text-gray-400 hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-dark-700 text-xs">
-                        <i class="fa-solid fa-copy mr-1"></i> Copy
-                    </button>
-                    <button id="download-scratchpad" title="Download Markdown" class="text-gray-400 hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-dark-700 text-xs">
-                        <i class="fa-solid fa-download mr-1"></i> Save
-                    </button>
-                    <button id="close-scratchpad" class="text-gray-400 hover:text-white p-1 rounded-lg">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="flex-1 p-4">
-                <textarea id="scratchpad-textarea" class="w-full h-full bg-dark-900 border border-dark-700 rounded-xl p-4 text-sm text-gray-200 font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" placeholder="Jot down notes, code snippets, or prompt drafts here..."></textarea>
-            </div>
-        </div>
-    </div>
-
-    <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-6 right-6 z-50 bg-indigo-600 text-white text-xs px-4 py-2.5 rounded-xl shadow-2xl transform translate-y-20 opacity-0 transition-all duration-300 flex items-center space-x-2">
-        <i class="fa-solid fa-circle-check"></i>
-        <span id="toast-message">Action successful</span>
-    </div>
-
-    <!-- Application Logic Script -->
     <script>
-        // State Management
-        let chats = JSON.parse(localStorage.getItem('qyrex_chats')) || [];
-        let currentChatId = localStorage.getItem('qyrex_current_chat') || null;
-        let apiKey = localStorage.getItem('qyrex_apikey') || '';
-        let systemPrompt = localStorage.getItem('qyrex_system_prompt') || 'You are QyrexAI, an expert senior software engineer and AI assistant built for advanced problem solving, coding, and technical analysis.';
-        let temperature = parseFloat(localStorage.getItem('qyrex_temperature')) || 0.7;
-        let scratchpadContent = localStorage.getItem('qyrex_scratchpad') || '';
-        let pendingFiles = [];
-        let abortController = null;
+        let chats = JSON.parse(localStorage.getItem('gemini_chats')) || [];
+        let currentChatId = null;
 
-        // DOM Elements
-        const sidebar = document.getElementById('sidebar');
-        const toggleSidebarBtn = document.getElementById('toggle-sidebar');
-        const closeSidebarBtn = document.getElementById('close-sidebar');
-        const newChatBtn = document.getElementById('new-chat-btn');
-        const chatHistoryList = document.getElementById('chat-history-list');
-        const chatContainer = document.getElementById('chat-container');
-        const emptyState = document.getElementById('empty-state');
-        const chatForm = document.getElementById('chat-form');
-        const userInput = document.getElementById('user-input');
-        const sendBtn = document.getElementById('send-btn');
-        const stopBtn = document.getElementById('stop-btn');
-        const fileUpload = document.getElementById('file-upload');
-        const uploadBtn = document.getElementById('upload-btn');
-        const attachmentPreviewContainer = document.getElementById('attachment-preview-container');
-        const fileCounter = document.getElementById('file-counter');
-        const modelSelect = document.getElementById('model-select');
-        const clearCurrentChatBtn = document.getElementById('clear-current-chat');
-        
-        // Modals
-        const settingsModal = document.getElementById('settings-modal');
-        const settingsBtn = document.getElementById('settings-btn');
-        const topSettingsBtn = document.getElementById('top-settings-btn');
-        const closeSettings = document.getElementById('close-settings');
-        const saveSettings = document.getElementById('save-settings');
-        const apiKeyInput = document.getElementById('api-key-input');
-        const systemPromptInput = document.getElementById('system-prompt-input');
-        const temperatureInput = document.getElementById('temperature-input');
-        const tempVal = document.getElementById('temp-val');
-
-        const scratchpadModal = document.getElementById('scratchpad-modal');
-        const openScratchpadBtn = document.getElementById('open-scratchpad-btn');
-        const closeScratchpad = document.getElementById('close-scratchpad');
-        const scratchpadTextarea = document.getElementById('scratchpad-textarea');
-        const copyScratchpad = document.getElementById('copy-scratchpad');
-        const downloadScratchpad = document.getElementById('download-scratchpad');
-
-        const exportJsonBtn = document.getElementById('export-json-btn');
-        const toast = document.getElementById('toast');
-        const toastMessage = document.getElementById('toast-message');
-
-        // Initialize App
         function initApp() {
-            apiKeyInput.value = apiKey;
-            systemPromptInput.value = systemPrompt;
-            temperatureInput.value = temperature;
-            tempVal.textContent = temperature;
-            scratchpadTextarea.value = scratchpadContent;
-
             if (chats.length === 0) {
-                createNewChat(false);
+                newChat();
             } else {
-                if (!currentChatId || !chats.find(c => c.id === currentChatId)) {
-                    currentChatId = chats[0].id;
-                }
+                loadChat(chats[0].id);
             }
             renderChatHistory();
-            loadCurrentChat();
-
-            // Auto-resize textarea
-            userInput.addEventListener('input', function() {
-                this.style.height = 'auto';
-                this.style.height = (this.scrollHeight) + 'px';
-            });
-
-            userInput.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    chatForm.dispatchEvent(new Event('submit'));
-                }
-            });
         }
 
-        function showToast(msg) {
-            toastMessage.textContent = msg;
-            toast.classList.remove('translate-y-20', 'opacity-0');
-            setTimeout(() => {
-                toast.classList.add('translate-y-20', 'opacity-0');
-            }, 3000);
-        }
-
-        // Chat Management
-        function createNewChat(switchTab = true) {
-            const newChat = {
-                id: 'chat_' + Date.now(),
-                title: 'New Conversation',
-                model: modelSelect.value,
-                messages: []
-            };
-            chats.unshift(newChat);
-            currentChatId = newChat.id;
+        function newChat() {
+            const newId = 'chat_' + Date.now();
+            const newChatObj = { id: newId, title: 'Nuevo chat', messages: [] };
+            chats.unshift(newChatObj);
             saveChats();
+            loadChat(newId);
             renderChatHistory();
-            loadCurrentChat();
-            if (window.innerWidth < 768) {
-                sidebar.classList.add('-translate-x-full');
+        }
+
+        function loadChat(id) {
+            currentChatId = id;
+            const chat = chats.find(c => c.id === id);
+            if (!chat) return;
+
+            const messagesList = document.getElementById('messagesList');
+            const welcomeScreen = document.getElementById('welcomeScreen');
+
+            messagesList.innerHTML = '';
+            if (chat.messages.length === 0) {
+                welcomeScreen.classList.remove('hidden');
+                messagesList.classList.add('hidden');
+            } else {
+                welcomeScreen.classList.add('hidden');
+                messagesList.classList.remove('hidden');
+                chat.messages.forEach(msg => appendMessageToDOM(msg.role, msg.content, false));
             }
+            renderChatHistory();
+            scrollToBottom();
         }
 
         function saveChats() {
-            localStorage.setItem('qyrex_chats', JSON.stringify(chats));
-            localStorage.setItem('qyrex_current_chat', currentChatId);
+            localStorage.setItem('gemini_chats', JSON.stringify(chats));
         }
 
         function renderChatHistory() {
-            chatHistoryList.innerHTML = '';
+            const list = document.getElementById('chatHistoryList');
+            list.innerHTML = '';
             chats.forEach(chat => {
                 const isActive = chat.id === currentChatId;
                 const div = document.createElement('div');
-                div.className = `group flex items-center justify-between px-3 py-2.5 rounded-xl text-sm cursor-pointer transition-colors ${isActive ? 'bg-indigo-600/10 text-indigo-400 font-medium border border-indigo-500/20' : 'text-gray-400 hover:text-white hover:bg-dark-700/50'}`;
+                div.className = `flex items-center justify-between px-3 py-2 rounded-lg text-sm cursor-pointer transition-colors group ${isActive ? 'bg-[#37393e] text-white font-medium' : 'text-gemini-muted hover:bg-gemini-hover hover:text-white'}`;
+                div.onclick = () => loadChat(chat.id);
+                
                 div.innerHTML = `
-                    <div class="flex items-center space-x-2.5 truncate flex-1" onclick="switchChat('${chat.id}')">
-                        <i class="fa-solid fa-message text-xs ${isActive ? 'text-indigo-400' : 'text-gray-500'}"></i>
-                        <span class="truncate">${escapeHtml(chat.title)}</span>
-                    </div>
-                    <button onclick="deleteChat(event, '${chat.id}')" class="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-400 p-1 transition-opacity">
-                        <i class="fa-solid fa-trash-can text-xs"></i>
+                    <span class="truncate flex-1 pr-2">${escapeHTML(chat.title)}</span>
+                    <button onclick="event.stopPropagation(); deleteChat('${chat.id}')" class="opacity-0 group-hover:opacity-100 text-gemini-muted hover:text-red-400 p-1">
+                        <i class="fa-solid fa-trash text-xs"></i>
                     </button>
                 `;
-                chatHistoryList.appendChild(div);
+                list.appendChild(div);
             });
         }
 
-        function switchChat(id) {
-            currentChatId = id;
-            saveChats();
-            renderChatHistory();
-            loadCurrentChat();
-            if (window.innerWidth < 768) {
-                sidebar.classList.add('-translate-x-full');
-            }
-        }
-
-        function deleteChat(e, id) {
-            e.stopPropagation();
+        function deleteChat(id) {
             chats = chats.filter(c => c.id !== id);
-            if (chats.length === 0) {
-                createNewChat(false);
-            } else if (currentChatId === id) {
-                currentChatId = chats[0].id;
-            }
             saveChats();
-            renderChatHistory();
-            loadCurrentChat();
+            if (chats.length === 0) {
+                newChat();
+            } else if (currentChatId === id) {
+                loadChat(chats[0].id);
+            } else {
+                renderChatHistory();
+            }
         }
 
-        function loadCurrentChat() {
+        function clearAllChats() {
+            if (confirm('¿Estás seguro de borrar todo el historial?')) {
+                chats = [];
+                saveChats();
+                newChat();
+            }
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('-ml-64');
+        }
+
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
+        }
+
+        function handleKeyDown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                document.getElementById('chatForm').requestSubmit();
+            }
+        }
+
+        async function handleSendMessage(event) {
+            event.preventDefault();
+            const input = document.getElementById('userInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            input.value = '';
+            input.style.height = 'auto';
+
             const chat = chats.find(c => c.id === currentChatId);
             if (!chat) return;
-            modelSelect.value = chat.model || modelSelect.value;
-            chatContainer.innerHTML = '';
+
             if (chat.messages.length === 0) {
-                chatContainer.appendChild(emptyState);
-            } else {
-                chat.messages.forEach(msg => appendMessageDOM(msg, false));
-                scrollToBottom();
+                chat.title = text.length > 30 ? text.substring(0, 30) + '...' : text;
             }
-        }
 
-        // File Upload Handler
-        uploadBtn.addEventListener('click', () => fileUpload.click());
-        fileUpload.addEventListener('change', (e) => {
-            const files = Array.from(e.target.files);
-            files.forEach(file => {
-                const reader = new FileReader();
-                reader.onload = (uploadEvent) => {
-                    pendingFiles.push({
-                        name: file.name,
-                        type: file.type,
-                        data: uploadEvent.target.result
-                    });
-                    renderAttachmentPreviews();
-                };
-                if (file.type.startsWith('image/')) {
-                    reader.readAsDataURL(file);
-                } else {
-                    reader.readAsText(file);
-                }
-            });
-            fileUpload.value = '';
-        });
+            chat.messages.push({ role: 'user', content: text });
+            saveChats();
 
-        function renderAttachmentPreviews() {
-            attachmentPreviewContainer.innerHTML = '';
-            if (pendingFiles.length > 0) {
-                fileCounter.textContent = `${pendingFiles.length} file(s) attached`;
-                fileCounter.classList.remove('hidden');
-                pendingFiles.forEach((file, index) => {
-                    const div = document.createElement('div');
-                    div.className = 'relative flex items-center bg-dark-700 border border-dark-600 rounded-xl p-1.5 pr-8 text-xs text-gray-200 max-w-xs';
-                    let previewHTML = `<i class="fa-solid fa-file-lines text-indigo-400 mr-2 text-sm"></i>`;
-                    if (file.type.startsWith('image/')) {
-                        previewHTML = `<img src="${file.data}" class="w-8 h-8 object-cover rounded-lg mr-2">`;
-                    }
-                    div.innerHTML = `
-                        ${previewHTML}
-                        <span class="truncate">${escapeHtml(file.name)}</span>
-                        <button type="button" onclick="removeAttachment(${index})" class="absolute right-1.5 text-gray-400 hover:text-red-400 p-1">
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
-                    `;
-                    attachmentPreviewContainer.appendChild(div);
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            const messagesList = document.getElementById('messagesList');
+            messagesList.classList.remove('hidden');
+
+            appendMessageToDOM('user', text, true);
+            renderChatHistory();
+
+            const assistantMsgId = 'msg_' + Date.now();
+            appendMessageToDOM('assistant', '<span class="inline-block animate-pulse">Pensando...</span>', true, assistantMsgId);
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: 'llama-3.3-70b-versatile',
+                        messages: chat.messages.map(m => ({ role: m.role, content: m.content })),
+                        temperature: 0.7
+                    })
                 });
-            } else {
-                fileCounter.classList.add('hidden');
-            }
-        }
 
-        function removeAttachment(index) {
-            pendingFiles.splice(index, 1);
-            renderAttachmentPreviews();
-        }
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Error al conectar con el servidor.');
 
-        // Markdown & Code Highlighting Parser
-        marked.setOptions({
-            highlight: function(code, lang) {
-                if (lang && hljs.getLanguage(lang)) {
-                    try {
-                        return hljs.highlight(code, { language: lang }).value;
-                    } catch (__) {}
+                const reply = data.choices[0].message.content;
+                chat.messages.push({ role: 'assistant', content: reply });
+                saveChats();
+
+                const msgDiv = document.getElementById(assistantMsgId);
+                if (msgDiv) {
+                    const contentDiv = msgDiv.querySelector('.message-content');
+                    contentDiv.innerHTML = marked.parse(reply);
+                    addCopyButtonsToCodeBlocks(contentDiv);
                 }
-                return hljs.highlightAuto(code).value;
-            },
-            langPrefix: 'hljs language-',
-            pedantic: false,
-            gfm: true,
-            breaks: true
-        });
-
-        function parseMarkdown(content) {
-            let html = marked.parse(content);
-            // Wrap code blocks with custom header & copy button
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = html;
-            const preElements = tempDiv.querySelectorAll('pre');
-            preElements.forEach(pre => {
-                const codeEl = pre.querySelector('code');
-                let lang = 'code';
-                if (codeEl) {
-                    const classList = Array.from(codeEl.classList);
-                    const langClass = classList.find(c => c.startsWith('language-'));
-                    if (langClass) {
-                        lang = langClass.replace('language-', '');
-                    }
+            } catch (err) {
+                const msgDiv = document.getElementById(assistantMsgId);
+                if (msgDiv) {
+                    const contentDiv = msgDiv.querySelector('.message-content');
+                    contentDiv.innerHTML = `<span class="text-red-400">Error: ${escapeHTML(err.message)}</span>`;
                 }
-                const container = document.createElement('div');
-                container.className = 'code-block-container';
-                
-                const header = document.createElement('div');
-                header.className = 'code-header';
-                header.innerHTML = `
-                    <span class="font-mono uppercase">${escapeHtml(lang)}</span>
-                    <button class="copy-code-btn" onclick="copyCodeSnippet(this)"><i class="fa-solid fa-copy mr-1"></i> Copy code</button>
-                `;
-                container.appendChild(header);
-                container.appendChild(pre.cloneNode(true));
-                pre.replaceWith(container);
-            });
-            return tempDiv.innerHTML;
-        }
-
-        function copyCodeSnippet(btn) {
-            const pre = btn.closest('.code-block-container').querySelector('pre');
-            const code = pre.textContent;
-            navigator.clipboard.writeText(code).then(() => {
-                const orig = btn.innerHTML;
-                btn.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Copied!';
-                setTimeout(() => btn.innerHTML = orig, 2000);
-            });
-        }
-
-        function copyFullResponse(btn, text) {
-            navigator.clipboard.writeText(text).then(() => {
-                const orig = btn.innerHTML;
-                btn.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Copied';
-                setTimeout(() => btn.innerHTML = orig, 2000);
-            });
-        }
-
-        // Append Message to DOM
-        function appendMessageDOM(msg, animate = true) {
-            if (document.getElementById('empty-state')) {
-                document.getElementById('empty-state').remove();
             }
+            scrollToBottom();
+        }
 
-            const isUser = msg.role === 'user';
+        function appendMessageToDOM(role, content, animate = false, id = null) {
+            const messagesList = document.getElementById('messagesList');
+            const isUser = role === 'user';
+            
             const wrapper = document.createElement('div');
-            wrapper.className = `flex ${isUser ? 'justify-end' : 'justify-start'} w-full mb-6`;
+            if (id) wrapper.id = id;
+            wrapper.className = `flex gap-4 w-full ${isUser ? 'justify-end' : 'justify-start'} ${animate ? 'transition-all duration-300' : ''}`;
 
-            let attachmentsHtml = '';
-            if (msg.attachments && msg.attachments.length > 0) {
-                attachmentsHtml = `<div class="flex flex-wrap gap-2 mb-3">`;
-                msg.attachments.forEach(att => {
-                    if (att.type.startsWith('image/')) {
-                        attachmentsHtml += `<img src="${att.data}" class="w-24 h-24 object-cover rounded-xl border border-dark-600 shadow-md">`;
-                    } else {
-                        attachmentsHtml += `<div class="bg-dark-800 border border-dark-700 p-2 rounded-xl text-xs text-gray-300 flex items-center space-x-2"><i class="fa-solid fa-file-lines text-indigo-400"></i><span class="truncate max-w-[150px]">${escapeHtml(att.name)}</span></div>`;
-                    }
-                });
-                attachmentsHtml += `</div>`;
+            const inner = document.createElement('div');
+            inner.className = `flex gap-3 max-w-[85%] md:max-w-[75%] ${isUser ? 'flex-row-reverse' : 'flex-row'}`;
+
+            const avatar = document.createElement('div');
+            avatar.className = `w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${isUser ? 'bg-blue-600 text-white' : 'bg-[#2d2e31] text-emerald-400 border border-gemini-border'}`;
+            avatar.innerHTML = isUser ? '<i class="fa-solid fa-user"></i>' : '<i class="fa-solid fa-sparkles"></i>';
+
+            const bubble = document.createElement('div');
+            bubble.className = `rounded-2xl px-4 py-3 text-sm markdown-body ${isUser ? 'bg-[#2b2d31] text-white rounded-tr-sm' : 'bg-transparent text-gemini-text w-full'}`;
+            
+            if (isUser) {
+                bubble.textContent = content;
+            } else {
+                bubble.classList.add('message-content');
+                bubble.innerHTML = marked.parse(content);
+                addCopyButtonsToCodeBlocks(bubble);
             }
 
-            const parsedContent = isUser ? escapeHtml(msg.content) : parseMarkdown(msg.content);
+            inner.appendChild(avatar);
+            inner.appendChild(bubble);
+            wrapper.appendChild(inner);
+            messagesList.appendChild(wrapper);
+            scrollToBottom();
+        }
 
-            wrapper.innerHTML = `
-                <div class="flex items-start space-x-3 max-w-3xl ${isUser ? 'flex-row-reverse space-x-reverse' : ''}">
-                    <div class="w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center shadow-md ${isUser ? 'bg-indigo-600 text-white' : 'bg-dark-700 text-indigo-400 border border-dark-600'}">
-                        <i class="fa-solid ${isUser ? 'fa-user text-xs' : 'fa-cube text-sm'}"></i>
-                    </div>
-                    <div class="flex flex-col ${isUser ? 'items-end' : 'items-start'}">
-                        <div class="text-xs text-gray-400 mb-1 px-1 font-medium">${isUser ? 'You' : 'QyrexAI'}</div>
-                        <div class="p-4 rounded-2xl shadow-sm text-sm ${isUser ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-dark-800 text-gray-100 border border-dark-700 rounded-tl-none markdown-body w-full'}">
-                            ${attachmentsHtml}
-                            <div class="message-body">${parsedContent}</div>
-                        </div>
-                        ${!isUser ? `
-                            <div class="flex items-center space-x-2 mt-2 px-1">
-                                <button onclick="copyFullResponse(this, \`${escapeJsString(msg.content)}\`)" class="text-xs text-gray-400 hover:text-white flex items-center space-x-1 py-1 px-2 rounded hover:bg-dark-800 transition-colors">
-                                    <i class="fa-solid fa-copy"></i>
-                                    <span>Copy response</span>
-                                </button>
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>
-            `;
-            chatContainer.appendChild(wrapper);
-            if (animate) scrollToBottom();
+        function addCopyButtonsToCodeBlocks(container) {
+            container.querySelectorAll('pre').forEach(pre => {
+                if (pre.querySelector('.copy-btn')) return;
+                
+                const btn = document.createElement('button');
+                btn.className = 'copy-btn absolute top-2 right-2 bg-[#37393e] hover:bg-gray-600 text-xs text-gemini-muted hover:text-white px-2 py-1 rounded transition-colors';
+                btn.innerHTML = '<i class="fa-solid fa-copy mr-1"></i> Copiar';
+                
+                pre.appendChild(btn);
+
+                btn.onclick = () => {
+                    const code = pre.querySelector('code') || pre;
+                    navigator.clipboard.writeText(code.innerText.replace('Copiar', '').trim());
+                    btn.innerHTML = '<i class="fa-solid fa-check mr-1 text-emerald-400"></i> ¡Copiado!';
+                    setTimeout(() => {
+                        btn.innerHTML = '<i class="fa-solid fa-copy mr-1"></i> Copiar';
+                    }, 2000);
+                };
+            });
         }
 
         function scrollToBottom() {
-            chatContainer.scrollTop = chatContainer.scrollHeight;
+            const container = document.getElementById('chatContainer');
+            container.scrollTop = container.scrollHeight;
         }
 
-        function escapeHtml(text) {
-            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
         }
-
-        function escapeJsString(str) {
-            return str.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
-        }
-
-        // Chat Form Submission & OpenRouter API Call
-        chatForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const text = userInput.value.trim();
-            if (!text && pendingFiles.length === 0) return;
-            if (!apiKey) {
-                showToast('Please configure your OpenRouter API Key in Settings.');
-                settingsModal.classList.remove('hidden');
-                return;
-            }
-
-            const chat = chats.find(c => c.id === currentChatId);
-            if (!chat) return;
-
-            // Auto-title on first message
-            if (chat.messages.length === 0 && text) {
-                chat.title = text.length > 30 ? text.substring(0, 30) + '...' : text;
-                renderChatHistory();
-            }
-
-            const userMsg = {
-                role: 'user',
-                content: text,
-                attachments: [...pendingFiles]
-            };
-
-            chat.messages.push(userMsg);
-            appendMessageDOM(userMsg);
-
-            userInput.value = '';
-            userInput.style.height = 'auto';
-            const sentAttachments = [...pendingFiles];
-            pendingFiles = [];
-            renderAttachmentPreviews();
-            saveChats();
-
-            // Toggle send / stop buttons
-            sendBtn.classList.add('hidden');
-            stopBtn.classList.remove('hidden');
-
-            // Build API Messages payload
-            const apiMessages = [
-                { role: 'system', content: systemPrompt }
-            ];
-
-            chat.messages.forEach(m => {
-                if (m.attachments && m.attachments.length > 0) {
-                    const contentArray = [];
-                    if (m.content) {
-                        contentArray.push({ type: 'text', text: m.content });
-                    }
-                    m.attachments.forEach(att => {
-                        if (att.type.startsWith('image/')) {
-                            contentArray.push({
-                                type: 'image_url',
-                                image_url: { url: att.data }
-                            });
-                        } else {
-                            contentArray.push({
-                                type: 'text',
-                                text: `[Attached File: ${att.name}]\n${att.data}`
-                            });
-                        }
-                    });
-                    apiMessages.push({ role: m.role, content: contentArray });
-                } else {
-                    apiMessages.push({ role: m.role, content: m.content });
-                }
-            });
-
-            const assistantMsgObj = { role: 'assistant', content: '' };
-            chat.messages.push(assistantMsgObj);
-
-            // Create streaming message DOM element placeholder
-            const wrapper = document.createElement('div');
-            wrapper.className = 'flex justify-start w-full mb-6';
-            wrapper.innerHTML = `
-                <div class="flex items-start space-x-3 max-w-3xl">
-                    <div class="w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center shadow-md bg-dark-700 text-indigo-400 border border-dark-600">
-                        <i class="fa-solid fa-cube text-sm"></i>
-                    </div>
-                    <div class="flex flex-col items-start">
-                        <div class="text-xs text-gray-400 mb-1 px-1 font-medium">QyrexAI</div>
-                        <div class="p-4 rounded-2xl shadow-sm text-sm bg-dark-800 text-gray-100 border border-dark-700 rounded-tl-none markdown-body w-full">
-                            <div class="message-body"><span class="inline-block animate-pulse">Thinking...</span></div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            chatContainer.appendChild(wrapper);
-            scrollToBottom();
-
-            const messageBodyDiv = wrapper.querySelector('.message-body');
-            abortController = new AbortController();
-
-            try {
-                const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${apiKey}`,
-                        'HTTP-Referer': window.location.origin,
-                        'X-Title': 'QyrexAI Workspace',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        model: chat.model || modelSelect.value,
-                        messages: apiMessages,
-                        temperature: temperature,
-                        stream: true
-                    }),
-                    signal: abortController.signal
-                });
-
-                if (!response.ok) {
-                    const errData = await response.json();
-                    throw new Error(errData.error?.message || `HTTP error! status: ${response.status}`);
-                }
-
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder();
-                let fullResponse = '';
-
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    const chunk = decoder.decode(value, { stream: true });
-                    const lines = chunk.split('\n');
-                    for (const line of lines) {
-                        const trimmed = line.trim();
-                        if (trimmed.startsWith('data: ')) {
-                            const dataStr = trimmed.substring(6);
-                            if (dataStr === '[DONE]') continue;
-                            try {
-                                const parsed = JSON.parse(dataStr);
-                                const token = parsed.choices[0]?.delta?.content || '';
-                                fullResponse += token;
-                                assistantMsgObj.content = fullResponse;
-                                messageBodyDiv.innerHTML = parseMarkdown(fullResponse);
-                                scrollToBottom();
-                            } catch (e) {}
-                        }
-                    }
-                }
-                saveChats();
-                // Replace assistant response wrapper with final copy actions
-                loadCurrentChat();
-
-            } catch (err) {
-                if (err.name === 'AbortError') {
-                    assistantMsgObj.content += '\n\n*[Generation stopped]*';
-                } else {
-                    assistantMsgObj.content = `**Error:** ${err.message}`;
-                }
-                messageBodyDiv.innerHTML = parseMarkdown(assistantMsgObj.content);
-                saveChats();
-            } finally {
-                sendBtn.classList.remove('hidden');
-                stopBtn.classList.add('hidden');
-                abortController = null;
-            }
-        });
-
-        stopBtn.addEventListener('click', () => {
-            if (abortController) {
-                abortController.abort();
-            }
-        });
-
-        // Quick prompt click handler
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.quick-prompt')) {
-                const btn = e.target.closest('.quick-prompt');
-                userInput.value = btn.textContent.trim().split('\n')[1]?.trim() || btn.textContent.trim();
-                userInput.focus();
-            }
-        });
-
-        // Clear Current Chat
-        clearCurrentChatBtn.addEventListener('click', () => {
-            const chat = chats.find(c => c.id === currentChatId);
-            if (chat) {
-                chat.messages = [];
-                saveChats();
-                loadCurrentChat();
-                showToast('Chat cleared');
-            }
-        });
-
-        // Export JSON
-        exportJsonBtn.addEventListener('click', () => {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(chats, null, 2));
-            const dlAnchor = document.createElement('a');
-            dlAnchor.setAttribute("href", dataStr);
-            dlAnchor.setAttribute("download", `qyrex_workspace_chats_${Date.now()}.json`);
-            document.body.appendChild(dlAnchor);
-            dlAnchor.click();
-            dlAnchor.remove();
-            showToast('Chats exported successfully');
-        });
-
-        // Settings Modal Controls
-        settingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
-        topSettingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
-        closeSettings.addEventListener('click', () => settingsModal.classList.add('hidden'));
-
-        temperatureInput.addEventListener('input', (e) => {
-            tempVal.textContent = e.target.value;
-        });
-
-        saveSettings.addEventListener('click', () => {
-            apiKey = apiKeyInput.value.trim();
-            systemPrompt = systemPromptInput.value.trim();
-            temperature = parseFloat(temperatureInput.value);
-
-            localStorage.setItem('qyrex_apikey', apiKey);
-            localStorage.setItem('qyrex_system_prompt', systemPrompt);
-            localStorage.setItem('qyrex_temperature', temperature);
-
-            settingsModal.classList.add('hidden');
-            showToast('Settings saved successfully');
-        });
-
-        // Scratchpad Modal Controls
-        openScratchpadBtn.addEventListener('click', () => scratchpadModal.classList.remove('hidden'));
-        closeScratchpad.addEventListener('click', () => {
-            scratchpadModal.classList.add('hidden');
-            saveScratchpad();
-        });
-
-        scratchpadTextarea.addEventListener('input', () => {
-            scratchpadContent = scratchpadTextarea.value;
-            localStorage.setItem('qyrex_scratchpad', scratchpadContent);
-        });
-
-        function saveScratchpad() {
-            localStorage.setItem('qyrex_scratchpad', scratchpadTextarea.value);
-            showToast('Scratchpad updated');
-        }
-
-        copyScratchpad.addEventListener('click', () => {
-            navigator.clipboard.writeText(scratchpadTextarea.value).then(() => showToast('Scratchpad copied'));
-        });
-
-        downloadScratchpad.addEventListener('click', () => {
-            const blob = new Blob([scratchpadTextarea.value], { type: 'text/markdown' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `scratchpad_${Date.now()}.md`;
-            a.click();
-            URL.revokeObjectURL(url);
-            showToast('Scratchpad saved');
-        });
-
-        // Keyboard Shortcut Ctrl+S for Scratchpad
-        document.addEventListener('keydown', (e) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-                e.preventDefault();
-                scratchpadModal.classList.toggle('hidden');
-            }
-        });
-
-        // Sidebar Toggle for Mobile
-        toggleSidebarBtn.addEventListener('click', () => {
-            sidebar.classList.toggle('-translate-x-full');
-        });
-        closeSidebarBtn.addEventListener('click', () => {
-            sidebar.classList.add('-translate-x-full');
-        });
-
-        newChatBtn.addEventListener('click', () => createNewChat());
-        modelSelect.addEventListener('change', (e) => {
-            const chat = chats.find(c => c.id === currentChatId);
-            if (chat) {
-                chat.model = e.target.value;
-                saveChats();
-            }
-        });
 
         window.onload = initApp;
     </script>
