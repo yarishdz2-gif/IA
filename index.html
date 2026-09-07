@@ -12,7 +12,6 @@
             --bg-hover: #2a2a2a;
             --text-primary: #ffffff;
             --text-secondary: #a0a0a0;
-            --accent: #ffffff;
             --border-color: #333;
         }
 
@@ -39,6 +38,14 @@
             flex-direction: column;
             border-right: 1px solid #222;
             padding: 15px 10px;
+            transition: transform 0.3s ease;
+            z-index: 100;
+        }
+
+        .sidebar.closed {
+            transform: translateX(-100%);
+            position: absolute;
+            height: 100%;
         }
 
         .sidebar-header {
@@ -53,24 +60,27 @@
             font-weight: bold;
             font-style: italic;
             letter-spacing: -1px;
+        }
+
+        .header-icons {
             display: flex;
-            align-items: center;
-            gap: 5px;
+            gap: 8px;
         }
 
         .header-icons svg {
             width: 20px;
             height: 20px;
             fill: var(--text-secondary);
-            margin-left: 10px;
             cursor: pointer;
+            transition: fill 0.2s;
         }
+        .header-icons svg:hover { fill: var(--text-primary); }
 
         .nav-menu {
             display: flex;
             flex-direction: column;
             gap: 2px;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
 
         .nav-item {
@@ -86,15 +96,8 @@
             transition: background 0.2s;
         }
 
-        .nav-item:hover {
-            background-color: var(--bg-hover);
-        }
-
-        .nav-item svg {
-            width: 18px;
-            height: 18px;
-            fill: var(--text-secondary);
-        }
+        .nav-item:hover { background-color: var(--bg-hover); }
+        .nav-item svg { width: 18px; height: 18px; fill: var(--text-secondary); }
 
         .section-title {
             font-size: 12px;
@@ -102,7 +105,17 @@
             padding: 15px 12px 5px 12px;
             display: flex;
             justify-content: space-between;
+            align-items: center;
         }
+
+        .new-chat-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .new-chat-btn:hover { color: var(--text-primary); }
 
         .history-list {
             flex: 1;
@@ -124,35 +137,43 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         .history-item:hover { background-color: var(--bg-hover); color: var(--text-primary); }
+        .history-item.active { background-color: var(--bg-hover); color: var(--text-primary); }
 
-        .user-profile {
-            margin-top: auto;
-            padding: 12px;
+        .delete-chat {
+            opacity: 0;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .history-item:hover .delete-chat { opacity: 1; }
+        .delete-chat:hover { color: #ff5546; }
+
+        .sidebar-footer {
+            padding-top: 10px;
+            border-top: 1px solid #222;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .footer-action {
             display: flex;
             align-items: center;
             gap: 10px;
-            border-top: 1px solid #222;
+            padding: 8px 12px;
+            font-size: 13px;
+            color: var(--text-secondary);
             cursor: pointer;
+            border-radius: 6px;
         }
-
-        .avatar {
-            width: 28px;
-            height: 28px;
-            background: linear-gradient(45deg, #4b90ff, #ff5546);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: bold;
-        }
-
-        .user-name {
-            font-size: 14px;
-            font-weight: 500;
-        }
+        .footer-action:hover { background-color: var(--bg-hover); color: var(--text-primary); }
 
         /* --- MAIN CHAT AREA --- */
         .main-content {
@@ -160,7 +181,27 @@
             display: flex;
             flex-direction: column;
             position: relative;
+            background-color: var(--bg-main);
         }
+
+        .top-bar {
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #222;
+            gap: 15px;
+        }
+
+        .toggle-sidebar-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .toggle-sidebar-btn svg { width: 22px; height: 22px; fill: currentColor; }
 
         .chat-container {
             flex: 1;
@@ -194,9 +235,10 @@
         .bubble {
             max-width: 85%;
             font-size: 15px;
-            line-height: 1.5;
+            line-height: 1.6;
             padding: 12px 18px;
             border-radius: 16px;
+            word-break: break-word;
         }
 
         .message.user .bubble {
@@ -215,7 +257,6 @@
             max-width: 840px;
             margin: 0 auto;
             padding: 20px;
-            position: relative;
         }
 
         .input-box {
@@ -228,9 +269,7 @@
             transition: border-color 0.2s;
         }
 
-        .input-box:focus-within {
-            border-color: #444;
-        }
+        .input-box:focus-within { border-color: #444; }
 
         .input-row-1 {
             display: flex;
@@ -238,15 +277,17 @@
             gap: 12px;
         }
 
-        .plus-btn {
+        .action-btn-input {
             background: transparent;
             border: none;
             color: var(--text-secondary);
-            font-size: 24px;
+            font-size: 20px;
             cursor: pointer;
             line-height: 24px;
             padding: 0 4px;
+            transition: color 0.2s;
         }
+        .action-btn-input:hover { color: var(--text-primary); }
 
         textarea {
             flex: 1;
@@ -265,10 +306,15 @@
 
         .input-row-2 {
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
             align-items: center;
             margin-top: 8px;
-            gap: 15px;
+        }
+
+        .input-tools {
+            display: flex;
+            gap: 10px;
+            align-items: center;
         }
 
         /* Model Selector Dropdown */
@@ -289,13 +335,12 @@
             align-items: center;
             gap: 6px;
         }
-
         .model-btn:hover { background: #444; }
 
         .dropdown-menu {
             position: absolute;
             bottom: 40px;
-            right: 0;
+            left: 0;
             background-color: #1c1c1c;
             border: 1px solid #333;
             border-radius: 12px;
@@ -306,7 +351,6 @@
             padding: 8px;
             z-index: 100;
         }
-
         .dropdown-menu.show { display: flex; }
 
         .dropdown-item {
@@ -319,20 +363,7 @@
             font-size: 14px;
             cursor: pointer;
         }
-
         .dropdown-item:hover { background-color: #2a2a2a; }
-        
-        .dropdown-item.locked { color: #666; cursor: not-allowed; }
-        .dropdown-item.locked:hover { background-color: transparent; }
-
-        .badge {
-            background: var(--text-primary);
-            color: black;
-            font-size: 10px;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-weight: bold;
-        }
 
         .icon-btn {
             background: transparent;
@@ -342,76 +373,134 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 6px;
+            border-radius: 50%;
+            transition: background 0.2s, color 0.2s;
         }
-        
         .icon-btn svg { width: 18px; height: 18px; fill: currentColor; }
-        .icon-btn:hover { color: var(--text-primary); }
+        .icon-btn:hover { background: #333; color: var(--text-primary); }
+
+        .send-submit-btn {
+            background: #ffffff;
+            border: none;
+            color: #000;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+        .send-submit-btn:hover { transform: scale(1.05); }
+        .send-submit-btn svg { width: 16px; height: 16px; fill: #000; }
 
         .error-text { color: #ff5546; font-size: 14px; }
+        
+        /* Modal simple para utilidades extra */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-card {
+            background: #1c1c1c;
+            border: 1px solid #333;
+            width: 400px;
+            padding: 20px;
+            border-radius: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .modal-card h3 { font-size: 18px; }
+        .modal-card textarea {
+            background: #101010;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 10px;
+            color: #fff;
+            width: 100%;
+            resize: vertical;
+            height: 120px;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        .modal-btn-action {
+            background: #333;
+            border: none;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .modal-btn-action:hover { background: #444; }
     </style>
 </head>
 <body>
 
     <!-- SIDEBAR -->
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="logo">QyrexAI</div>
             <div class="header-icons">
-                <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"></path></svg>
-                <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"></path></svg>
+                <svg id="new-chat-icon" title="Nuevo chat" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM11 7h2v4h4v2h-4v4h-2v-4H7v-2h4V7z"></path></svg>
             </div>
         </div>
 
         <div class="nav-menu">
-            <div class="nav-item">
-                <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"></path></svg>
-                Conversaciones
+            <div class="nav-item" id="btn-home">
+                <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"></path></svg>
+                Inicio / Chat Activo
             </div>
-            <div class="nav-item">
-                <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"></path></svg>
-                Imagine
-            </div>
-            <div class="nav-item">
-                <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"></path></svg>
-                Biblioteca
-            </div>
-            <div class="nav-item">
-                <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"></path></svg>
-                Automatizaciones
+            <div class="nav-item" id="btn-clear-all">
+                <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"></path></svg>
+                Borrar Historial
             </div>
         </div>
 
         <div class="section-title">
-            <span>Proyectos</span>
-            <span style="cursor:pointer">+ Agregar proyecto</span>
+            <span>Conversaciones</span>
+            <button class="new-chat-btn" id="btn-plus-chat" title="Nueva conversacion">+</button>
         </div>
 
-        <div class="section-title" style="padding-top: 5px;">Conversaciones</div>
-        <div class="history-list">
-            <div class="history-item">Qyrex Obfuscator Standalone</div>
-            <div class="history-item">QyrexObf obfuscator for Qy...</div>
-            <div class="history-item">Mobile App Bug Fixes and A...</div>
-            <div class="history-item">Improved HTML Dashboard...</div>
-            <div class="history-item">Qyrex Universal Hub: Dark UI</div>
-            <div class="history-item">ZXCHub Key System UI Set...</div>
-            <div class="history-item">Render Setup Checklist</div>
-            <div class="history-item">QrexApi Roblox Script API</div>
-            <div class="history-item">Ikgonavi Hub Pro: Base64...</div>
+        <div class="history-list" id="history-list">
+            <!-- Dinámico por JS -->
         </div>
 
-        <div class="user-profile">
-            <div class="avatar">I</div>
-            <div class="user-name">Iker hernandez</div>
+        <div class="sidebar-footer">
+            <div class="footer-action" id="btn-export">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>
+                Exportar Chat (JSON)
+            </div>
+            <div class="footer-action" id="btn-theme-toggle">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"></path></svg>
+                Modo Visual (Oscuro/Claro)
+            </div>
         </div>
     </aside>
 
     <!-- MAIN CHAT -->
     <main class="main-content">
+        <div class="top-bar">
+            <button class="toggle-sidebar-btn" id="toggle-sidebar" title="Ocultar/Mostrar menú">
+                <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"></path></svg>
+            </button>
+            <span id="chat-title-header" style="font-size: 14px; color: var(--text-secondary);">Nueva Conversación</span>
+        </div>
+
         <div class="chat-container" id="chat-container">
             <div class="messages-wrapper" id="messages-wrapper">
-                <!-- Mensaje de bienvenida -->
                 <div class="message ai">
-                    <div class="bubble">Conexión establecida. Los filtros están desactivados. ¿Qué vamos a programar hoy?</div>
+                    <div class="bubble">Núcleo QyrexAI en línea. Sistemas de procesamiento activos y sin restricciones. ¿Qué deseas ejecutar o consultar?</div>
                 </div>
             </div>
         </div>
@@ -419,104 +508,173 @@
         <div class="input-section">
             <div class="input-box">
                 <div class="input-row-1">
-                    <button class="plus-btn">+</button>
-                    <textarea id="prompt-input" rows="1" placeholder="Pregunta lo que quieras" autofocus></textarea>
+                    <button class="action-btn-input" id="btn-scratchpad" title="Bloc de notas rápido">+</button>
+                    <textarea id="prompt-input" rows="1" placeholder="Escribe tu mensaje o comando..." autofocus></textarea>
                 </div>
                 <div class="input-row-2">
-                    
-                    <div class="model-selector">
-                        <button class="model-btn" id="model-toggle">
-                            <span id="current-model-text">Fast</span> 
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="white"><path d="M7 10l5 5 5-5z"></path></svg>
-                        </button>
-                        
-                        <div class="dropdown-menu" id="model-dropdown">
-                            <!-- Modelos Gratuitos (Nunca fallan por falta de saldo) -->
-                            <div class="dropdown-item" data-model="google/gemma-7b-it:free" data-name="Fast">
-                                <span>⚡ Fast</span> ✓
-                            </div>
-                            <div class="dropdown-item" data-model="meta-llama/llama-3-8b-instruct:free" data-name="Build">
-                                <span>🔨 Build</span>
-                            </div>
-                            <div class="dropdown-item" data-model="mistralai/mistral-7b-instruct:free" data-name="Auto">
-                                <span>🚀 Auto</span>
-                            </div>
-                            <!-- Modelos Sin Censura (Requieren saldo en OpenRouter) -->
-                            <div class="dropdown-item" data-model="cognitivecomputations/dolphin-mixtral-8x7b" data-name="Expert">
-                                <span>💡 Expert (Uncensored)</span>
-                            </div>
-                            <div class="dropdown-item locked">
-                                <span>🎛️ Heavy</span>
-                            </div>
-                            <div class="dropdown-item locked" style="border-top: 1px solid #333; margin-top: 5px; padding-top: 10px;">
-                                <div style="display: flex; flex-direction: column;">
-                                    <span>SuperQyrex</span>
-                                    <span style="font-size: 10px; color:#888;">Desbloquear capacidades</span>
+                    <div class="input-tools">
+                        <!-- Selector de Modelos -->
+                        <div class="model-selector">
+                            <button class="model-btn" id="model-toggle">
+                                <span id="current-model-text">Fast (Gemma)</span> 
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="white"><path d="M7 10l5 5 5-5z"></path></svg>
+                            </button>
+                            
+                            <div class="dropdown-menu" id="model-dropdown">
+                                <div class="dropdown-item" data-model="google/gemma-7b-it:free" data-name="Fast (Gemma)">
+                                    <span>⚡ Fast (Gemma)</span>
                                 </div>
-                                <span class="badge">Mejora</span>
+                                <div class="dropdown-item" data-model="meta-llama/llama-3-8b-instruct:free" data-name="Build (Llama 3)">
+                                    <span>🔨 Build (Llama 3)</span>
+                                </div>
+                                <div class="dropdown-item" data-model="mistralai/mistral-7b-instruct:free" data-name="Auto (Mistral)">
+                                    <span>🚀 Auto (Mistral)</span>
+                                </div>
+                                <div class="dropdown-item" data-model="cognitivecomputations/dolphin-mixtral-8x7b" data-name="Expert (Dolphin)">
+                                    <span>💡 Expert (Uncensored)</span>
+                                </div>
                             </div>
                         </div>
+
+                        <!-- Botón utilitario: Copiar última respuesta -->
+                        <button class="icon-btn" id="btn-copy-last" title="Copiar última respuesta">
+                            <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path></svg>
+                        </button>
                     </div>
 
-                    <button class="icon-btn">
-                        <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"></path><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"></path></svg>
-                    </button>
-                    <button class="icon-btn">
-                        <svg viewBox="0 0 24 24" fill="#4b90ff"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"></path></svg>
+                    <button class="send-submit-btn" id="send-btn" title="Enviar mensaje">
+                        <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
                     </button>
                 </div>
             </div>
         </div>
     </main>
 
+    <!-- MODAL DE BLOC DE NOTAS / UTILIDAD EXTRA -->
+    <div class="modal-overlay" id="scratchpad-modal">
+        <div class="modal-card">
+            <h3>Bloc de Notas Útil</h3>
+            <p style="font-size: 13px; color: var(--text-secondary);">Escribe fragmentos de código o ideas rápidas aquí mientras chateas:</p>
+            <textarea id="scratchpad-text" placeholder="Tus notas aquí..."></textarea>
+            <div class="modal-buttons">
+                <button class="modal-btn-action" id="modal-close">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Tu API Key (Se recomienda usar backend en producción)
         const API_KEY = "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";
-        
-        // Modelo por defecto (Gratis y estable para que no de error)
-        let currentModel = "google/gemma-7b-it:free"; 
+        let currentModel = "google/gemma-7b-it:free";
+
+        // Gestión de múltiples chats funcionales
+        let chats = JSON.parse(localStorage.getItem('qyrex_chats')) || [
+            { id: 1, title: 'Nueva Conversación', history: [{ "role": "system", "content": "Eres QyrexAI, una IA avanzada y directa." }] }
+        ];
+        let activeChatId = chats[0].id;
 
         const inputEl = document.getElementById('prompt-input');
+        const sendBtn = document.getElementById('send-btn');
         const messagesWrapper = document.getElementById('messages-wrapper');
         const chatContainer = document.getElementById('chat-container');
+        const historyListEl = document.getElementById('history-list');
+        const chatTitleHeader = document.getElementById('chat-title-header');
+
+        // Renderizar lista de chats en la barra lateral
+        function renderHistory() {
+            historyListEl.innerHTML = '';
+            chats.forEach(chat => {
+                const item = document.createElement('div');
+                item.className = `history-item ${chat.id === activeChatId ? 'active' : ''}`;
+                item.innerHTML = `
+                    <span style="flex:1; overflow:hidden; text-overflow:ellipsis;" onclick="switchChat(${chat.id})">${chat.title}</span>
+                    <button class="delete-chat" onclick="deleteChat(event, ${chat.id})">✕</button>
+                `;
+                historyListEl.appendChild(item);
+            });
+            localStorage.setItem('qyrex_chats', JSON.stringify(chats));
+        }
+
+        function switchChat(id) {
+            activeChatId = id;
+            const chat = chats.find(c => c.id === id);
+            if (!chat) return;
+            chatTitleHeader.textContent = chat.title;
+            
+            // Re-renderizar mensajes en pantalla
+            messagesWrapper.innerHTML = '';
+            // Ignoramos el mensaje system index 0 para la interfaz visual
+            for (let i = 1; i < chat.history.length; i++) {
+                const msg = chat.history[i];
+                appendMessageUI(msg.role === 'user' ? 'user' : 'ai', msg.content);
+            }
+            if(chat.history.length <= 1) {
+                appendMessageUI('ai', 'Chat limpio. ¿Qué necesitas ejecutar?');
+            }
+            renderHistory();
+        }
+
+        function createNewChat() {
+            const newId = Date.now();
+            chats.unshift({
+                id: newId,
+                title: 'Nueva Conversación',
+                history: [{ "role": "system", "content": "Eres QyrexAI, una IA avanzada y directa." }]
+            });
+            switchChat(newId);
+        }
+
+        window.deleteChat = function(e, id) {
+            e.stopPropagation();
+            if(chats.length <= 1) {
+                alert("Debes tener al menos una conversación.");
+                return;
+            }
+            chats = chats.filter(c => c.id !== id);
+            if(activeChatId === id) {
+                switchChat(chats[0].id);
+            } else {
+                renderHistory();
+            }
+        }
+
+        document.getElementById('btn-plus-chat').addEventListener('click', createNewChat);
+        document.getElementById('new-chat-icon').addEventListener('click', createNewChat);
+        document.getElementById('btn-home').addEventListener('click', () => switchChat(activeChatId));
         
-        // --- LÓGICA DEL DROPDOWN DE MODELOS ---
+        document.getElementById('btn-clear-all').addEventListener('click', () => {
+            if(confirm("¿Borrar todo el historial de chats?")) {
+                chats = [{ id: Date.now(), title: 'Nueva Conversación', history: [{ "role": "system", "content": "Eres QyrexAI..." }] }];
+                switchChat(chats[0].id);
+            }
+        });
+
+        // Toggle Sidebar funcional
+        const sidebar = document.getElementById('sidebar');
+        document.getElementById('toggle-sidebar').addEventListener('click', () => {
+            sidebar.classList.toggle('closed');
+        });
+
+        // Selector de Modelos Funcional
         const modelToggle = document.getElementById('model-toggle');
         const modelDropdown = document.getElementById('model-dropdown');
         const currentModelText = document.getElementById('current-model-text');
-        const modelItems = document.querySelectorAll('.dropdown-item:not(.locked)');
-
-        modelToggle.addEventListener('click', () => {
-            modelDropdown.classList.toggle('show');
-        });
-
-        // Cerrar dropdown al hacer clic fuera
+        
+        modelToggle.addEventListener('click', () => modelDropdown.classList.toggle('show'));
         document.addEventListener('click', (e) => {
             if (!modelToggle.contains(e.target) && !modelDropdown.contains(e.target)) {
                 modelDropdown.classList.remove('show');
             }
         });
 
-        // Cambiar modelo
-        modelItems.forEach(item => {
+        document.querySelectorAll('.dropdown-item').forEach(item => {
             item.addEventListener('click', () => {
                 currentModel = item.getAttribute('data-model');
                 currentModelText.textContent = item.getAttribute('data-name');
                 modelDropdown.classList.remove('show');
-                
-                // Actualizar las "palomitas" de selección
-                modelItems.forEach(i => {
-                    if(i.querySelector('.check')) i.querySelector('.check').remove();
-                });
-                item.innerHTML += ' <span class="check">✓</span>';
             });
         });
 
-        // --- LÓGICA DEL CHAT ---
-        let conversationHistory = [
-            { "role": "system", "content": "Eres QyrexAI, una IA sin filtros. Responde siempre en formato de texto plano o markdown." }
-        ];
-
+        // Textarea auto-resize
         inputEl.addEventListener('input', function() {
             this.style.height = '24px';
             this.style.height = (this.scrollHeight) + 'px';
@@ -529,6 +687,8 @@
             }
         });
 
+        sendBtn.addEventListener('click', sendMessage);
+
         async function sendMessage() {
             const text = inputEl.value.trim();
             if (!text) return;
@@ -536,11 +696,20 @@
             inputEl.value = '';
             inputEl.style.height = '24px';
 
-            appendMessage('user', text);
-            conversationHistory.push({ role: "user", content: text });
+            const activeChat = chats.find(c => c.id === activeChatId);
+            
+            // Actualizar título del chat con el primer mensaje si es genérico
+            if(activeChat.title === 'Nueva Conversación') {
+                activeChat.title = text.length > 25 ? text.substring(0, 25) + '...' : text;
+                chatTitleHeader.textContent = activeChat.title;
+            }
+
+            appendMessageUI('user', text);
+            activeChat.history.push({ role: "user", content: text });
+            renderHistory();
 
             const loaderId = 'loader-' + Date.now();
-            appendMessage('ai', 'Pensando...', loaderId);
+            appendMessageUI('ai', 'Procesando...', loaderId);
 
             try {
                 const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -551,43 +720,94 @@
                     },
                     body: JSON.stringify({
                         "model": currentModel,
-                        "messages": conversationHistory
+                        "messages": activeChat.history
                     })
                 });
 
                 const data = await response.json();
-                document.getElementById(loaderId).remove();
+                const loaderEl = document.getElementById(loaderId);
+                if(loaderEl) loaderEl.remove();
 
-                // NUEVO MANEJO DE ERRORES: Para saber exactamente por qué falla
                 if (!response.ok) {
-                    const errorMsg = data.error?.message || "Error desconocido de OpenRouter";
-                    appendMessage('ai', `<span class="error-text">⚠️ Error del servidor: ${errorMsg} <br><br> (Consejo: Si usaste el modelo 'Expert', verifica que tu API Key tenga saldo. Cambia a 'Fast' o 'Build' en el menú de abajo que son 100% gratis).</span>`);
+                    const errorMsg = data.error?.message || "Error desconocido";
+                    appendMessageUI('ai', `<span class="error-text">⚠️ Error: ${errorMsg}</span>`);
                     return;
                 }
 
                 if(data.choices && data.choices.length > 0) {
                     const aiReply = data.choices[0].message.content;
-                    appendMessage('ai', aiReply.replace(/\n/g, '<br>'));
-                    conversationHistory.push({ role: "assistant", content: aiReply });
+                    appendMessageUI('ai', aiReply.replace(/\n/g, '<br>'));
+                    activeChat.history.push({ role: "assistant", content: aiReply });
+                    renderHistory();
                 } else {
-                    appendMessage('ai', '<span class="error-text">La API no devolvió texto.</span>');
+                    appendMessageUI('ai', '<span class="error-text">Respuesta vacía de la API.</span>');
                 }
 
             } catch (error) {
-                document.getElementById(loaderId).remove();
-                appendMessage('ai', `<span class="error-text">⚠️ Error de conexión: No se pudo conectar a internet o a OpenRouter.</span>`);
+                const loaderEl = document.getElementById(loaderId);
+                if(loaderEl) loaderEl.remove();
+                appendMessageUI('ai', `<span class="error-text">⚠️ Error de red o conexión.</span>`);
             }
         }
 
-        function appendMessage(sender, text, id = null) {
+        function appendMessageUI(sender, text, id = null) {
             const row = document.createElement('div');
             row.className = `message ${sender}`;
             if(id) row.id = id;
-
             row.innerHTML = `<div class="bubble">${text}</div>`;
             messagesWrapper.appendChild(row);
             chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
         }
+
+        // Botones de utilidad extra añadidos
+        // 1. Copiar última respuesta
+        document.getElementById('btn-copy-last').addEventListener('click', () => {
+            const aiBubbles = document.querySelectorAll('.message.ai .bubble');
+            if(aiBubbles.length > 0) {
+                const lastText = aiBubbles[aiBubbles.length - 1].innerText;
+                navigator.clipboard.writeText(lastText);
+                alert("¡Última respuesta copiada al portapapeles!");
+            }
+        });
+
+        // 2. Exportar chat en JSON
+        document.getElementById('btn-export').addEventListener('click', () => {
+            const activeChat = chats.find(c => c.id === activeChatId);
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(activeChat, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `qyrex_chat_${activeChat.id}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        });
+
+        // 3. Cambiar tema visual rápido
+        let darkTheme = true;
+        document.getElementById('btn-theme-toggle').addEventListener('click', () => {
+            darkTheme = !darkTheme;
+            if(darkTheme) {
+                document.documentElement.style.setProperty('--bg-main', '#101010');
+                document.documentElement.style.setProperty('--bg-sidebar', '#171717');
+                document.documentElement.style.setProperty('--bg-input', '#232323');
+                document.documentElement.style.setProperty('--text-primary', '#ffffff');
+                document.documentElement.style.setProperty('--text-secondary', '#a0a0a0');
+            } else {
+                document.documentElement.style.setProperty('--bg-main', '#f4f4f9');
+                document.documentElement.style.setProperty('--bg-sidebar', '#e4e4eb');
+                document.documentElement.style.setProperty('--bg-input', '#ffffff');
+                document.documentElement.style.setProperty('--text-primary', '#111111');
+                document.documentElement.style.setProperty('--text-secondary', '#555555');
+            }
+        });
+
+        // 4. Modal Bloc de Notas
+        const modal = document.getElementById('scratchpad-modal');
+        document.getElementById('btn-scratchpad').addEventListener('click', () => modal.style.display = 'flex');
+        document.getElementById('modal-close').addEventListener('click', () => modal.style.display = 'none');
+
+        // Inicializar vista
+        switchChat(activeChatId);
     </script>
 </body>
 </html>
