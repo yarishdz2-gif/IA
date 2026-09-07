@@ -516,22 +516,22 @@
                         <!-- Selector de Modelos -->
                         <div class="model-selector">
                             <button class="model-btn" id="model-toggle">
-                                <span id="current-model-text">Fast (Gemma)</span> 
+                                <span id="current-model-text">Fast (Gemma 2)</span> 
                                 <svg width="10" height="10" viewBox="0 0 24 24" fill="white"><path d="M7 10l5 5 5-5z"></path></svg>
                             </button>
                             
                             <div class="dropdown-menu" id="model-dropdown">
-                                <div class="dropdown-item" data-model="google/gemma-7b-it:free" data-name="Fast (Gemma)">
-                                    <span>⚡ Fast (Gemma)</span>
+                                <div class="dropdown-item" data-model="google/gemma-2-9b-it:free" data-name="Fast (Gemma 2)">
+                                    <span>⚡ Fast (Gemma 2)</span>
                                 </div>
-                                <div class="dropdown-item" data-model="meta-llama/llama-3-8b-instruct:free" data-name="Build (Llama 3)">
-                                    <span>🔨 Build (Llama 3)</span>
+                                <div class="dropdown-item" data-model="meta-llama/llama-3.1-8b-instruct:free" data-name="Build (Llama 3.1)">
+                                    <span>🔨 Build (Llama 3.1)</span>
                                 </div>
                                 <div class="dropdown-item" data-model="mistralai/mistral-7b-instruct:free" data-name="Auto (Mistral)">
                                     <span>🚀 Auto (Mistral)</span>
                                 </div>
-                                <div class="dropdown-item" data-model="cognitivecomputations/dolphin-mixtral-8x7b" data-name="Expert (Dolphin)">
-                                    <span>💡 Expert (Uncensored)</span>
+                                <div class="dropdown-item" data-model="deepseek/deepseek-chat:free" data-name="DeepSeek Free">
+                                    <span>💡 DeepSeek Free</span>
                                 </div>
                             </div>
                         </div>
@@ -550,7 +550,7 @@
         </div>
     </main>
 
-    <!-- MODAL DE BLOC DE NOTAS / UTILIDAD EXTRA -->
+    <!-- MODAL DE BLOC DE NOTAS -->
     <div class="modal-overlay" id="scratchpad-modal">
         <div class="modal-card">
             <h3>Bloc de Notas Útil</h3>
@@ -563,10 +563,9 @@
     </div>
 
     <script>
-        const API_KEY = "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";
-        let currentModel = "google/gemma-7b-it:free";
+        const API_KEY = "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"; 
+        let currentModel = "google/gemma-2-9b-it:free";
 
-        // Gestión de múltiples chats funcionales
         let chats = JSON.parse(localStorage.getItem('qyrex_chats')) || [
             { id: 1, title: 'Nueva Conversación', history: [{ "role": "system", "content": "Eres QyrexAI, una IA avanzada y directa." }] }
         ];
@@ -579,7 +578,6 @@
         const historyListEl = document.getElementById('history-list');
         const chatTitleHeader = document.getElementById('chat-title-header');
 
-        // Renderizar lista de chats en la barra lateral
         function renderHistory() {
             historyListEl.innerHTML = '';
             chats.forEach(chat => {
@@ -600,9 +598,7 @@
             if (!chat) return;
             chatTitleHeader.textContent = chat.title;
             
-            // Re-renderizar mensajes en pantalla
             messagesWrapper.innerHTML = '';
-            // Ignoramos el mensaje system index 0 para la interfaz visual
             for (let i = 1; i < chat.history.length; i++) {
                 const msg = chat.history[i];
                 appendMessageUI(msg.role === 'user' ? 'user' : 'ai', msg.content);
@@ -648,13 +644,11 @@
             }
         });
 
-        // Toggle Sidebar funcional
         const sidebar = document.getElementById('sidebar');
         document.getElementById('toggle-sidebar').addEventListener('click', () => {
             sidebar.classList.toggle('closed');
         });
 
-        // Selector de Modelos Funcional
         const modelToggle = document.getElementById('model-toggle');
         const modelDropdown = document.getElementById('model-dropdown');
         const currentModelText = document.getElementById('current-model-text');
@@ -674,7 +668,6 @@
             });
         });
 
-        // Textarea auto-resize
         inputEl.addEventListener('input', function() {
             this.style.height = '24px';
             this.style.height = (this.scrollHeight) + 'px';
@@ -698,7 +691,6 @@
 
             const activeChat = chats.find(c => c.id === activeChatId);
             
-            // Actualizar título del chat con el primer mensaje si es genérico
             if(activeChat.title === 'Nueva Conversación') {
                 activeChat.title = text.length > 25 ? text.substring(0, 25) + '...' : text;
                 chatTitleHeader.textContent = activeChat.title;
@@ -759,8 +751,6 @@
             chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
         }
 
-        // Botones de utilidad extra añadidos
-        // 1. Copiar última respuesta
         document.getElementById('btn-copy-last').addEventListener('click', () => {
             const aiBubbles = document.querySelectorAll('.message.ai .bubble');
             if(aiBubbles.length > 0) {
@@ -770,7 +760,6 @@
             }
         });
 
-        // 2. Exportar chat en JSON
         document.getElementById('btn-export').addEventListener('click', () => {
             const activeChat = chats.find(c => c.id === activeChatId);
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(activeChat, null, 2));
@@ -782,7 +771,6 @@
             downloadAnchor.remove();
         });
 
-        // 3. Cambiar tema visual rápido
         let darkTheme = true;
         document.getElementById('btn-theme-toggle').addEventListener('click', () => {
             darkTheme = !darkTheme;
@@ -801,12 +789,10 @@
             }
         });
 
-        // 4. Modal Bloc de Notas
         const modal = document.getElementById('scratchpad-modal');
         document.getElementById('btn-scratchpad').addEventListener('click', () => modal.style.display = 'flex');
         document.getElementById('modal-close').addEventListener('click', () => modal.style.display = 'none');
 
-        // Inicializar vista
         switchChat(activeChatId);
     </script>
 </body>
