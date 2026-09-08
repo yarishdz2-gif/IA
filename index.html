@@ -45,6 +45,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    
+    <!-- JSZip for ZIP extraction -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
     <!-- Custom Styling & Scrollbars -->
     <style>
@@ -133,7 +136,7 @@
                 </div>
                 <div>
                     <h1 class="font-bold text-base tracking-wide text-white">QyrexAI</h1>
-                    <span class="text-xs text-indigo-400 font-medium">Workspace v3.0 · OpenRouter</span>
+                    <span class="text-xs text-indigo-400 font-medium">Workspace v3.1 · ZIP + OpenRouter</span>
                 </div>
             </div>
             <button id="close-sidebar" class="md:hidden text-gray-400 hover:text-white p-1 rounded-lg">
@@ -251,8 +254,8 @@
 
                     <div class="flex items-center justify-between px-3 py-2 bg-dark-800/80 border-t border-dark-700/50">
                         <div class="flex items-center space-x-2">
-                            <input type="file" id="file-upload" class="hidden" multiple accept="image/*,.txt,.md,.js,.json,.py,.html,.css">
-                            <button type="button" id="upload-btn" title="Attach Image or File" class="text-gray-400 hover:text-indigo-400 p-2 rounded-lg hover:bg-dark-700 transition-colors text-sm">
+                            <input type="file" id="file-upload" class="hidden" multiple accept="image/*,.txt,.md,.js,.jsx,.ts,.tsx,.json,.py,.html,.css,.scss,.sass,.vue,.svelte,.java,.c,.cpp,.h,.hpp,.cs,.go,.rs,.php,.rb,.swift,.kt,.sql,.sh,.bash,.yml,.yaml,.toml,.xml,.csv,.log,.zip,.pdf,.env,.gitignore,.dockerfile">
+                            <button type="button" id="upload-btn" title="Adjuntar imagen, código o ZIP" class="text-gray-400 hover:text-indigo-400 p-2 rounded-lg hover:bg-dark-700 transition-colors text-sm">
                                 <i class="fa-solid fa-paperclip"></i>
                             </button>
                             <span id="file-counter" class="text-xs text-gray-500 hidden">0 files attached</span>
@@ -292,7 +295,7 @@
             <div class="p-6 space-y-4">
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1.5">System Prompt</label>
-                    <textarea id="system-prompt-input" rows="3" class="w-full bg-dark-900 border border-dark-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">You are QyrexAI, an expert senior software engineer and AI assistant built for advanced problem solving, coding, and technical analysis.</textarea>
+                    <textarea id="system-prompt-input" rows="4" class="w-full bg-dark-900 border border-dark-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">You are QyrexAI, an expert senior software engineer and AI assistant (inspired by Grok). You excel at reading entire codebases from ZIP files, analyzing architecture, refactoring, debugging, writing clean code, and explaining complex systems. When the user attaches files or a ZIP project, carefully examine all the provided files before answering. Be direct, helpful, and thorough.</textarea>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1.5">Temperature (<span id="temp-val">0.7</span>)</label>
@@ -344,7 +347,7 @@
     <script>
         let chats = JSON.parse(localStorage.getItem('qyrex_chats')) || [];
         let currentChatId = localStorage.getItem('qyrex_current_chat') || null;
-        let systemPrompt = localStorage.getItem('qyrex_system_prompt') || 'You are QyrexAI, an expert senior software engineer and AI assistant built for advanced problem solving, coding, and technical analysis.';
+        let systemPrompt = localStorage.getItem('qyrex_system_prompt') || 'You are QyrexAI, an expert senior software engineer and AI assistant (inspired by Grok). You excel at reading entire codebases from ZIP files, analyzing architecture, refactoring, debugging, writing clean code, and explaining complex systems. When the user attaches files or a ZIP project, carefully examine all the provided files before answering. Be direct, helpful, and thorough.';
         let temperature = parseFloat(localStorage.getItem('qyrex_temperature')) || 0.7;
         let scratchpadContent = localStorage.getItem('qyrex_scratchpad') || '';
         let pendingFiles = [];
@@ -502,43 +505,147 @@
             }
         }
 
-        uploadBtn.addEventListener('click', () => fileUpload.click());
-        fileUpload.addEventListener('change', (e) => {
-            const files = Array.from(e.target.files);
-            files.forEach(file => {
+        // Extensiones de texto que se leen como texto plano
+        const TEXT_EXTENSIONS = new Set([
+            'txt','md','markdown','js','jsx','ts','tsx','mjs','cjs','json','py','html','htm','css','scss','sass','less',
+            'vue','svelte','java','c','cpp','cc','cxx','h','hpp','cs','go','rs','php','rb','swift','kt','kts','sql',
+            'sh','bash','zsh','yml','yaml','toml','xml','csv','log','env','gitignore','dockerfile','makefile','cmake',
+            'ini','cfg','conf','properties','gradle','pom','lock','mod','sum','r','dart','lua','pl','pm','scala'
+        ]);
+
+        const MAX_ZIP_FILES = 80;          // máximo de archivos a extraer de un ZIP
+        const MAX_FILE_SIZE = 1.5 * 1024 * 1024; // 1.5 MB por archivo de texto
+
+        function getExtension(name) {
+            const parts = name.toLowerCase().split('.');
+            return parts.length > 1 ? parts.pop() : '';
+        }
+
+        function isTextFile(file) {
+            if (file.type && (file.type.startsWith('text/') || file.type === 'application/json' || file.type === 'application/javascript')) {
+                return true;
+            }
+            return TEXT_EXTENSIONS.has(getExtension(file.name));
+        }
+
+        function isZipFile(file) {
+            return file.type === 'application/zip' ||
+                   file.type === 'application/x-zip-compressed' ||
+                   getExtension(file.name) === 'zip';
+        }
+
+        async function processZipFile(file) {
+            showToast('Extrayendo ZIP...');
+            try {
+                const zip = await JSZip.loadAsync(file);
+                const entries = [];
+                zip.forEach((relativePath, zipEntry) => {
+                    if (!zipEntry.dir) entries.push(relativePath);
+                });
+
+                // Filtrar solo archivos de texto / código y limitar cantidad
+                const textEntries = entries
+                    .filter(path => {
+                        const ext = getExtension(path);
+                        // Ignorar carpetas de dependencias y binarios comunes
+                        if (path.includes('node_modules/') || path.includes('.git/') || path.includes('__pycache__/')) return false;
+                        if (path.includes('dist/') || path.includes('build/') || path.includes('.next/')) return false;
+                        return TEXT_EXTENSIONS.has(ext) || ext === '';
+                    })
+                    .slice(0, MAX_ZIP_FILES);
+
+                let extracted = 0;
+                for (const path of textEntries) {
+                    const zipEntry = zip.file(path);
+                    if (!zipEntry) continue;
+
+                    const content = await zipEntry.async('string');
+                    if (content.length > MAX_FILE_SIZE) continue; // saltar archivos demasiado grandes
+
+                    pendingFiles.push({
+                        name: path,                    // mantenemos la ruta relativa
+                        type: 'text/plain',
+                        data: content,
+                        fromZip: file.name
+                    });
+                    extracted++;
+                }
+
+                renderAttachmentPreviews();
+                showToast(`ZIP: ${extracted} archivo(s) extraídos de ${file.name}`);
+            } catch (err) {
+                console.error(err);
+                showToast('Error al leer el ZIP: ' + err.message);
+            }
+        }
+
+        function processNormalFile(file) {
+            return new Promise((resolve) => {
                 const reader = new FileReader();
-                reader.onload = (uploadEvent) => {
+                reader.onload = (e) => {
                     pendingFiles.push({
                         name: file.name,
-                        type: file.type,
-                        data: uploadEvent.target.result
+                        type: file.type || 'application/octet-stream',
+                        data: e.target.result
                     });
-                    renderAttachmentPreviews();
+                    resolve();
                 };
+                reader.onerror = () => resolve();
+
                 if (file.type.startsWith('image/')) {
                     reader.readAsDataURL(file);
-                } else {
+                } else if (isTextFile(file) || file.size < MAX_FILE_SIZE) {
                     reader.readAsText(file);
+                } else {
+                    // Archivos binarios grandes: solo nombre
+                    pendingFiles.push({
+                        name: file.name,
+                        type: file.type || 'application/octet-stream',
+                        data: `[Archivo binario: ${file.name} (${(file.size/1024).toFixed(1)} KB) – no se pudo leer como texto]`
+                    });
+                    resolve();
                 }
             });
+        }
+
+        uploadBtn.addEventListener('click', () => fileUpload.click());
+        fileUpload.addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files);
+            if (!files.length) return;
+
+            for (const file of files) {
+                if (isZipFile(file)) {
+                    await processZipFile(file);
+                } else {
+                    await processNormalFile(file);
+                }
+            }
+            renderAttachmentPreviews();
             fileUpload.value = '';
         });
 
         function renderAttachmentPreviews() {
             attachmentPreviewContainer.innerHTML = '';
             if (pendingFiles.length > 0) {
-                fileCounter.textContent = `${pendingFiles.length} file(s) attached`;
+                fileCounter.textContent = `${pendingFiles.length} archivo(s) adjunto(s)`;
                 fileCounter.classList.remove('hidden');
+
                 pendingFiles.forEach((file, index) => {
                     const div = document.createElement('div');
                     div.className = 'relative flex items-center bg-dark-700 border border-dark-600 rounded-xl p-1.5 pr-8 text-xs text-gray-200 max-w-xs';
+
                     let previewHTML = `<i class="fa-solid fa-file-lines text-indigo-400 mr-2 text-sm"></i>`;
-                    if (file.type.startsWith('image/')) {
+                    if (file.type && file.type.startsWith('image/')) {
                         previewHTML = `<img src="${file.data}" class="w-8 h-8 object-cover rounded-lg mr-2">`;
+                    } else if (file.fromZip) {
+                        previewHTML = `<i class="fa-solid fa-file-zipper text-amber-400 mr-2 text-sm"></i>`;
                     }
+
+                    const displayName = file.fromZip ? `${file.name}` : file.name;
+
                     div.innerHTML = `
                         ${previewHTML}
-                        <span class="truncate">${escapeHtml(file.name)}</span>
+                        <span class="truncate" title="${escapeHtml(displayName)}">${escapeHtml(displayName)}</span>
                         <button type="button" onclick="removeAttachment(${index})" class="absolute right-1.5 text-gray-400 hover:text-red-400 p-1">
                             <i class="fa-solid fa-xmark"></i>
                         </button>
@@ -632,8 +739,10 @@
             if (msg.attachments && msg.attachments.length > 0) {
                 attachmentsHtml = `<div class="flex flex-wrap gap-2 mb-3">`;
                 msg.attachments.forEach(att => {
-                    if (att.type.startsWith('image/')) {
+                    if (att.type && att.type.startsWith('image/')) {
                         attachmentsHtml += `<img src="${att.data}" class="w-24 h-24 object-cover rounded-xl border border-dark-600 shadow-md">`;
+                    } else if (att.fromZip) {
+                        attachmentsHtml += `<div class="bg-dark-800 border border-amber-700/40 p-2 rounded-xl text-xs text-gray-300 flex items-center space-x-2"><i class="fa-solid fa-file-zipper text-amber-400"></i><span class="truncate max-w-[180px]" title="${escapeHtml(att.name)}">${escapeHtml(att.name)}</span></div>`;
                     } else {
                         attachmentsHtml += `<div class="bg-dark-800 border border-dark-700 p-2 rounded-xl text-xs text-gray-300 flex items-center space-x-2"><i class="fa-solid fa-file-lines text-indigo-400"></i><span class="truncate max-w-[150px]">${escapeHtml(att.name)}</span></div>`;
                     }
@@ -723,19 +832,43 @@
                     if (m.content) {
                         contentArray.push({ type: 'text', text: m.content });
                     }
+
+                    // Agrupar archivos que vienen de ZIP para dar mejor contexto
+                    const zipGroups = {};
+                    const normalFiles = [];
+
                     m.attachments.forEach(att => {
-                        if (att.type.startsWith('image/')) {
+                        if (att.type && att.type.startsWith('image/')) {
                             contentArray.push({
                                 type: 'image_url',
                                 image_url: { url: att.data }
                             });
+                        } else if (att.fromZip) {
+                            if (!zipGroups[att.fromZip]) zipGroups[att.fromZip] = [];
+                            zipGroups[att.fromZip].push(att);
                         } else {
-                            contentArray.push({
-                                type: 'text',
-                                text: `[Attached File: ${att.name}]\n${att.data}`
-                            });
+                            normalFiles.push(att);
                         }
                     });
+
+                    // Archivos normales
+                    normalFiles.forEach(att => {
+                        contentArray.push({
+                            type: 'text',
+                            text: `### Archivo: \`${att.name}\`\n\`\`\`\n${att.data}\n\`\`\``
+                        });
+                    });
+
+                    // Archivos provenientes de ZIP (como un proyecto)
+                    Object.entries(zipGroups).forEach(([zipName, files]) => {
+                        let projectText = `### Proyecto extraído del ZIP: \`${zipName}\`\n`;
+                        projectText += `Contiene ${files.length} archivo(s):\n\n`;
+                        files.forEach(f => {
+                            projectText += `#### \`${f.name}\`\n\`\`\`\n${f.data}\n\`\`\`\n\n`;
+                        });
+                        contentArray.push({ type: 'text', text: projectText });
+                    });
+
                     apiMessages.push({ role: m.role, content: contentArray });
                 } else {
                     apiMessages.push({ role: m.role, content: m.content });
