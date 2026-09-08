@@ -133,7 +133,7 @@
                 </div>
                 <div>
                     <h1 class="font-bold text-base tracking-wide text-white">QyrexAI</h1>
-                    <span class="text-xs text-indigo-400 font-medium">Workspace v2.5</span>
+                    <span class="text-xs text-indigo-400 font-medium">Workspace v3.0 · OpenRouter</span>
                 </div>
             </div>
             <button id="close-sidebar" class="md:hidden text-gray-400 hover:text-white p-1 rounded-lg">
@@ -189,10 +189,12 @@
                 <!-- Model Switcher (Clean Tiers) -->
                 <div class="relative">
                     <select id="model-select" class="bg-dark-700/90 text-gray-200 text-xs md:text-sm font-medium py-1.5 pl-3 pr-8 rounded-lg border border-dark-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer appearance-none">
-                        <option value="llama-3.1-8b-instant">⚡ El Fast</option>
-                        <option value="llama-3.3-70b-versatile">🔥 El Mejor / El Heavy</option>
-                        <option value="mixtral-8x7b-32768">⚖️ El Medio</option>
-                        <option value="gemma2-9b-it">💻 El Programador</option>
+                        <option value="meta-llama/llama-3.3-70b-instruct">🔥 El Mejor (Llama 3.3 70B)</option>
+                        <option value="google/gemini-2.5-flash">⚡ El Fast (Gemini 2.5 Flash)</option>
+                        <option value="deepseek/deepseek-chat">🧠 DeepSeek Chat</option>
+                        <option value="mistralai/mixtral-8x7b-instruct">⚖️ El Medio (Mixtral)</option>
+                        <option value="openai/gpt-4o-mini">💻 GPT-4o Mini</option>
+                        <option value="openrouter/free">🆓 Free Models Router</option>
                     </select>
                     <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
                         <i class="fa-solid fa-chevron-down text-xs"></i>
@@ -269,7 +271,7 @@
                     </div>
                 </form>
                 <div class="text-center mt-2">
-                    <span class="text-[11px] text-gray-500">QyrexAI Workspace connected securely via Groq server proxy.</span>
+                    <span class="text-[11px] text-gray-500">QyrexAI Workspace · Powered by OpenRouter</span>
                 </div>
             </div>
         </div>
@@ -297,7 +299,7 @@
                     <input type="range" id="temperature-input" min="0" max="1" step="0.05" value="0.7" class="w-full accent-indigo-500">
                 </div>
                 <div class="p-3 bg-dark-900 rounded-xl border border-dark-700 text-xs text-gray-400">
-                    <i class="fa-solid fa-shield-halved text-emerald-400 mr-1.5"></i> Your Groq API Key is safely active in your backend environment variables (`GROQ_API_KEY`).
+                    <i class="fa-solid fa-shield-halved text-emerald-400 mr-1.5"></i> Tu OpenRouter API Key está activa de forma segura en las variables de entorno del backend (<code class="text-indigo-300">OPENROUTER_API_KEY</code>).
                 </div>
             </div>
             <div class="p-4 border-t border-dark-700 bg-dark-900/50 flex justify-end space-x-3">

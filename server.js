@@ -1,28 +1,24 @@
 // ---------------------------------------------------------------
-// server.js   (versión completa y lista para producción)
+// server.js  –  QyrexAI Workspace (OpenRouter proxy)
+// Listo para producción en Render / Railway / etc.
 // ---------------------------------------------------------------
 
-require('dotenv').config();                 // Carga .env (solo en desarrollo)
+require('dotenv').config(); // Solo en desarrollo local
 const express = require('express');
 const path = require('path');
 
 // ---------------------------------------------------------------
-// 0️⃣  FETCH – fallback entre fetch nativo y node-fetch@2
+// 0️⃣  FETCH (nativo en Node ≥ 18)
 // ---------------------------------------------------------------
 let fetchFn;
-
-// Node >= 18 incluye fetch nativamente
 if (typeof fetch === 'function') {
   fetchFn = fetch;
 } else {
-  // En versiones antiguas intentamos cargar node‑fetch@2 (CommonJS)
   try {
-    // La versión 2 exporta la función directamente
     fetchFn = require('node-fetch');
   } catch (e) {
-    console.error('❌ No se encontró node-fetch y el runtime no tiene fetch nativo.');
-    console.error('   Instala node-fetch@2 (`npm i node-fetch@2`) o usa Node >= 18.');
-    process.exit(1); // Abortamos porque no podemos continuar
+    console.error('❌ No hay fetch nativo ni node-fetch. Usa Node ≥ 18 o instala node-fetch@2');
+    process.exit(1);
   }
 }
 
@@ -33,56 +29,32 @@ const PORT = process.env.PORT || 3000;
 // ---------------------------------------------------------------
 // 1️⃣  CONFIGURACIÓN BÁSICA
 // ---------------------------------------------------------------
-app.use(express.json({ limit: '10mb' }));   // Cuerpo máximo 10 MB
-app.use(express.static(__dirname));         // Archivos estáticos (frontend)
+app.use(express.json({ limit: '25mb' })); // Imágenes base64
+app.use(express.static(path.join(__dirname))); // Sirve index.html y assets
 
 // ---------------------------------------------------------------
-// 2️⃣  MAPA DE SUSTITUCIÓN DE MODELOS DEPRECIADOS
+// 2️⃣  HELPERS
 // ---------------------------------------------------------------
-/**
- * Si Groq deprecia un modelo, indícalo aquí y asigna el modelo que
- * debe usarse en su lugar.
- *
- * Ejemplo:
- *   'gemma2-9b-it': 'mixtral-8x7b-32768',
- */
-const modelFallbackMap = {
-  'gemma2-9b-it': 'mixtral-8x7b-32768',
-  // 'old-model-name': 'new-model-name',
-};
 
-// ---------------------------------------------------------------
-// 3️⃣  LISTA DE MODELOS PERMITIDOS (whitelist)
-// ---------------------------------------------------------------
 /**
- * Sólo los modelos presentes en este Set pueden ser usados por la API.
- * Añade o elimina según lo que tengas habilitado en la consola de Groq.
- */
-const allowedModels = new Set([
-  'mixtral-8x7b-32768',
-  'llama3.1-70b-versatile',
-  'llama3.1-8b',
-  // 'otro-modelo-que-uses',
-]);
-
-// ---------------------------------------------------------------
-// 4️⃣  HELPERS
-// ---------------------------------------------------------------
-/**
- * Comprueba que `messages` sea un array de objetos con `role` y `content`.
+ * Valida que messages sea un array de objetos con role + content.
+ * content puede ser string O array (multimodal / imágenes).
  */
 function isValidMessagesArray(messages) {
-  if (!Array.isArray(messages)) return false;
-  return messages.every(
-    (msg) =>
-      typeof msg === 'object' &&
-      typeof msg.role === 'string' &&
-      typeof msg.content === 'string'
-  );
+  if (!Array.isArray(messages) || messages.length === 0) return false;
+  return messages.every((msg) => {
+    if (typeof msg !== 'object' || msg === null) return false;
+    if (typeof msg.role !== 'string') return false;
+    // content puede ser string o array de partes
+    return (
+      typeof msg.content === 'string' ||
+      Array.isArray(msg.content)
+    );
+  });
 }
 
 /**
- * Formatea la respuesta de error. En producción sólo se envía el mensaje.
+ * Formatea errores. En producción solo se envía el mensaje limpio.
  */
 function formatErrorResponse(message, extra = {}) {
   const base = { error: message };
@@ -93,142 +65,160 @@ function formatErrorResponse(message, extra = {}) {
 }
 
 // ---------------------------------------------------------------
-// 5️⃣  ENDPOINT /api/chat
+// 3️⃣  ENDPOINT PRINCIPAL /api/chat
 // ---------------------------------------------------------------
 app.post('/api/chat', async (req, res) => {
   try {
     // ---------------------------------------------------------
-    // 5.1️⃣  VALIDAR API‑KEY
+    // 3.1  API Key
     // ---------------------------------------------------------
-    const apiKey = process.env.GROQ_API_KEY;
+    const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
       return res
         .status(500)
-        .json(formatErrorResponse('GROQ_API_KEY no está configurada en .env'));
-    }
-
-    // ---------------------------------------------------------
-    // 5.2️⃣  VALIDAR Y NORMALIZAR EL MODELO
-    // ---------------------------------------------------------
-    let model = req.body.model || 'llama3.1-70b-versatile';
-
-    // Si el modelo está deprecado → sustituir por fallback
-    if (modelFallbackMap[model]) {
-      console.warn(
-        `Modelo "${model}" está decommissioned. Se reemplaza por "${modelFallbackMap[model]}".`
-      );
-      model = modelFallbackMap[model];
-    }
-
-    // Verificar que el modelo resultante está permitido
-    if (!allowedModels.has(model)) {
-      return res
-        .status(400)
         .json(
           formatErrorResponse(
-            `Modelo "${model}" no está soportado por esta API.`,
-            { allowedModels: Array.from(allowedModels) }
+            'OPENROUTER_API_KEY no está configurada. Añádela en las Environment Variables de Render.'
           )
         );
     }
 
     // ---------------------------------------------------------
-    // 5.3️⃣  VALIDAR EL CUERPO DE MENSAJES
+    // 3.2  Extraer y normalizar body
     // ---------------------------------------------------------
-    const {
+    let {
+      model = 'meta-llama/llama-3.3-70b-instruct',
       messages,
-      temperature,
+      temperature = 0.7,
       max_tokens,
       top_p,
-      stream,
+      stream = false,
     } = req.body;
 
+    // Limpieza básica del modelo
+    if (typeof model !== 'string' || !model.trim()) {
+      model = 'meta-llama/llama-3.3-70b-instruct';
+    }
+    model = model.trim();
+
+    // ---------------------------------------------------------
+    // 3.3  Validar mensajes
+    // ---------------------------------------------------------
     if (!isValidMessagesArray(messages)) {
-      return res
-        .status(400)
-        .json(
-          formatErrorResponse(
-            'El campo "messages" debe ser un array de objetos con "role" y "content".'
-          )
-        );
+      return res.status(400).json(
+        formatErrorResponse(
+          'El campo "messages" debe ser un array de objetos con "role" y "content" (string o array multimodal).'
+        )
+      );
     }
 
     // ---------------------------------------------------------
-    // 5.4️⃣  CONSTRUIR EL PAYLOAD PARA GROQ
+    // 3.4  Payload para OpenRouter
     // ---------------------------------------------------------
     const payload = {
       model,
       messages,
-      temperature: typeof temperature === 'number' ? temperature : 0.7,
-      // Opcionales: solo los incluimos si el cliente los envió
-      ...(max_tokens !== undefined && { max_tokens }),
-      ...(top_p !== undefined && { top_p }),
-      ...(stream !== undefined && { stream }),
+      temperature: typeof temperature === 'number' ? Math.min(Math.max(temperature, 0), 2) : 0.7,
+      ...(typeof max_tokens === 'number' && { max_tokens }),
+      ...(typeof top_p === 'number' && { top_p }),
+      stream: Boolean(stream),
     };
 
     // ---------------------------------------------------------
-    // 5.5️⃣  LLAMADA A LA API DE GROQ
+    // 3.5  Headers recomendados por OpenRouter
     // ---------------------------------------------------------
-    const response = await fetchFn('https://api.groq.com/openai/v1/chat/completions', {
+    const headers = {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': process.env.OPENROUTER_SITE_URL || 'https://qyrexai-workspace.onrender.com',
+      'X-Title': process.env.OPENROUTER_SITE_NAME || 'QyrexAI Workspace',
+    };
+
+    // ---------------------------------------------------------
+    // 3.6  Llamada a OpenRouter
+    // ---------------------------------------------------------
+    const response = await fetchFn('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify(payload),
     });
 
-    // ---------------------------------------------------------
-    // 5.6️⃣  PROCESAR LA RESPUESTA
-    // ---------------------------------------------------------
     const contentType = response.headers.get('content-type') || '';
 
+    // ---------------------------------------------------------
+    // 3.7  Procesar respuesta
+    // ---------------------------------------------------------
     let data;
     if (contentType.includes('application/json')) {
       try {
         data = await response.json();
       } catch (jsonErr) {
         const raw = await response.text();
-        console.error('❌ Error al parsear JSON de Groq:', jsonErr);
-        console.error('Cuerpo recibido (raw):', raw);
+        console.error('❌ Error parseando JSON de OpenRouter:', jsonErr.message);
+        console.error('Raw body:', raw.slice(0, 500));
         return res
           .status(502)
-          .json(
-            formatErrorResponse('Respuesta inesperada de Groq (JSON inválido).', {
-              raw,
-            })
-          );
+          .json(formatErrorResponse('Respuesta inválida de OpenRouter (JSON).', { raw: raw.slice(0, 300) }));
       }
     } else {
-      // Si no es JSON (p.ej. HTML de error 502) devolvemos texto crudo
       const raw = await response.text();
-      console.warn('⚠️ Respuesta de Groq no es JSON (Content‑Type:', contentType, ')');
+      console.warn('⚠️ OpenRouter devolvió Content-Type no JSON:', contentType);
       return res
         .status(response.status || 502)
-        .json(
-          formatErrorResponse('Respuesta no JSON de Groq.', {
-            raw,
-            contentType,
-          })
-        );
+        .json(formatErrorResponse('Respuesta no JSON de OpenRouter.', { contentType, raw: raw.slice(0, 300) }));
     }
 
-    // Si la API respondió con error (4xx / 5xx) lo propagamos
+    // Error de la API (4xx / 5xx)
     if (!response.ok) {
-      console.error('❌ Error de Groq (status:', response.status, '):', data);
-      return res
-        .status(response.status)
-        .json(
-          formatErrorResponse(
-            data?.error?.message || 'Error de Groq',
-            { groqError: data }
-          )
-        );
+      const msg =
+        data?.error?.message ||
+        data?.error ||
+        data?.message ||
+        `Error de OpenRouter (HTTP ${response.status})`;
+      console.error('❌ OpenRouter error:', response.status, msg);
+      return res.status(response.status).json(formatErrorResponse(msg, { openrouter: data }));
     }
 
     // ---------------------------------------------------------
-    // 5.7️⃣  TODO OK → devolver respuesta de Groq al cliente
+    // 3.8  Éxito → devolver tal cual (formato OpenAI compatible)
     // ---------------------------------------------------------
     res.json(data);
   } catch (err) {
-    //
+    console.error('💥 Error interno en /api/chat:', err);
+    res
+      .status(500)
+      .json(
+        formatErrorResponse(
+          err.message || 'Error interno del servidor',
+          process.env.NODE_ENV !== 'production' ? { stack: err.stack } : {}
+        )
+      );
+  }
+});
+
+// ---------------------------------------------------------------
+// 4️⃣  Health check (útil en Render)
+// ---------------------------------------------------------------
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    service: 'QyrexAI Workspace',
+    provider: 'OpenRouter',
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// ---------------------------------------------------------------
+// 5️⃣  SPA fallback (por si se usa routing del frontend)
+// ---------------------------------------------------------------
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// ---------------------------------------------------------------
+// 6️⃣  Arranque
+// ---------------------------------------------------------------
+app.listen(PORT, () => {
+  console.log(`🚀 QyrexAI Workspace (OpenRouter) escuchando en puerto ${PORT}`);
+  console.log(`   OPENROUTER_API_KEY: ${process.env.OPENROUTER_API_KEY ? '✅ configurada' : '❌ FALTA'}`);
+});
