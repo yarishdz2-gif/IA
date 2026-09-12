@@ -67,7 +67,7 @@ async function getGenerator(progress_callback = undefined) {
       try {
         const pipe = await pipeline('text-generation', modelId, {
           dtype: DTYPE,
-          device: 'wasm',
+          device: 'cpu',
           progress_callback
         });
         activeModel = modelId;

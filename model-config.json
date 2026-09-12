@@ -1,6 +1,6 @@
 {
   "name": "QyrexAI Real Gen 8.0",
-  "runtime": "Transformers.js + ONNX Runtime Web (WASM)",
+  "runtime": "Transformers.js + ONNX Runtime (CPU)",
   "primary_auto": "onnx-community/Qwen2.5-1.5B-Instruct",
   "fast_fallback": "onnx-community/Qwen2.5-0.5B-Instruct",
   "dtype": "q4",

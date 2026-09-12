@@ -1,6 +1,6 @@
 # QyrexAI Real Gen 8.0
 
-Motor generativo real para Render usando Transformers.js + ONNX Runtime WASM. Se eliminó node-llama-cpp porque el servicio anterior podía quedar bloqueado cargando o terminar sin texto.
+Motor generativo real para Render usando Transformers.js + ONNX Runtime CPU. Se eliminó node-llama-cpp porque el servicio anterior podía quedar bloqueado cargando o terminar sin texto.
 
 ## Modelo
 
@@ -30,4 +30,4 @@ Se usa un disco persistente en `/opt/render/project/src/data` para conversacione
 `QYREX_MODEL_ID` puede forzar un modelo Transformers.js compatible.
 `QYREX_DTYPE` puede ser `q4`, `q4f16`, `q8`, etc., si el modelo lo soporta.
 `QYREX_MAX_TOKENS` controla la longitud máxima de salida.
-`QYREX_THREADS` controla los hilos WASM.
+`QYREX_THREADS` controla los hilos CPU.
