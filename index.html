@@ -135,18 +135,29 @@ textarea{flex:1;resize:none;max-height:160px;background:transparent;border:0;out
 <script src="./qyrex-model.js"></script>
 <script src="./qyrex-engine.js"></script>
 <script>
-const app = new QyrexApp();
+class QyrexApp{
+ constructor(){this.model=new QyrexLocalModel();this.engine=new QyrexEngine(this.model);this.turns=0;this._load();}
+ _load(){this.engine.load();try{const raw=localStorage.getItem('qyrex_model_meta_v2');if(raw){const d=JSON.parse(raw);this.model.step=d.step||0;this.model.examples=d.examples||0}}catch(e){}}
+ _save(){try{localStorage.setItem('qyrex_model_meta_v2',JSON.stringify({step:this.model.step,examples:this.model.examples}))}catch(e){}}
+ async init(){this.renderWelcome();this.updateStats();const p=document.getElementById('prompt');p.focus();}
+ renderWelcome(){document.getElementById('chatInner').innerHTML='';this.aiMsg('**QyrexAI 2.0 local** está listo.\n\nTengo un núcleo neuronal local de **8,388,608 parámetros**, memoria persistente y herramientas híbridas para código, HTML, matemáticas, ciencia y conversación. No uso APIs externas.');}
+ updateStats(){const n=this.model.parameterCount().toLocaleString();document.getElementById('turns').textContent=this.turns;document.getElementById('paramsSide').textContent=n;document.getElementById('memorySide').textContent=this.engine.memory.length;document.getElementById('statParams').textContent=n;document.getElementById('statTrainable').textContent=n;document.getElementById('statMemory').textContent=this.engine.memory.length;document.getElementById('trainLabel').textContent=this.model.examples+' ejemplos';}
+ aiMsg(text){const el=document.createElement('div');el.className='row';el.innerHTML='<div class="avatar ai">Q</div><div class="msg"><div class="meta">QyrexAI · neural local</div>'+QyrexMarkdown(text)+'</div>';document.getElementById('chatInner').appendChild(el);this.scroll();}
+ userMsg(text){const el=document.createElement('div');el.className='row user';el.innerHTML='<div class="msg">'+QyrexMarkdown(text)+'</div><div class="avatar user">TÚ</div>';document.getElementById('chatInner').appendChild(el);this.scroll();}
+ scroll(){const c=document.getElementById('chat');c.scrollTop=c.scrollHeight;}
+ newChat(){document.getElementById('chatInner').innerHTML='';this.turns=0;this.renderWelcome();this.updateStats();}
+ async send(){const ta=document.getElementById('prompt');const raw=ta.value.trim();if(!raw)return;ta.value='';ta.style.height='auto';this.userMsg(raw);this.turns++;const t=performance.now();document.getElementById('stateText').textContent='Procesando…';await new Promise(r=>setTimeout(r,10));let answer=this.engine.respond(raw);const emb=this.model.encode(raw);this.engine.remember(raw,answer,emb);this._save();this.updateStats();const ms=Math.round(performance.now()-t);this.aiMsg(answer+'\n\n<span style="color:#70788a;font-size:10px">local · '+ms+' ms · '+this.model.parameterCount().toLocaleString()+' params</span>');document.getElementById('stateText').textContent='Modelo local activo';}
+ openModel(){document.getElementById('modelOverlay').classList.add('show');this.updateStats();}
+ closeModel(){document.getElementById('modelOverlay').classList.remove('show');}
+ async trainStarter(){const status=document.getElementById('trainStatus'),bar=document.getElementById('trainProgress');status.textContent='Entrenando dataset local…';bar.style.width='0%';const pairs=QyrexStarterDataset.map(x=>({text:x[0],label:x[1]}));await this.model.train(pairs,async(n,total)=>{bar.style.width=(n/total*100).toFixed(1)+'%';status.textContent='Entrenando '+n+'/'+total+' ejemplos…';this.updateStats()});this._save();this.updateStats();status.textContent='Entrenamiento terminado. Los pesos adaptados quedan guardados en esta sesión.';}
+ clearLearning(){localStorage.removeItem('qyrex_model_meta_v2');localStorage.removeItem('qyrex_memory_v2');this.model=new QyrexLocalModel();this.engine=new QyrexEngine(this.model);this.turns=0;this.updateStats();document.getElementById('trainProgress').style.width='0%';document.getElementById('trainStatus').textContent='Aprendizaje y memoria borrados.';}
+ exportModel(){const d={version:'2.0.0',meta:this.model.exportMeta(),memory:this.engine.memory};const blob=new Blob([JSON.stringify(d)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='qyrexai-local-learning.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);}
+ async importModel(e){const f=e.target.files&&e.target.files[0];if(!f)return;try{const d=JSON.parse(await f.text());if(Array.isArray(d.memory)){this.engine.memory=d.memory.slice(-300);this.engine.save()}if(d.meta){this.model.step=d.meta.step||0;this.model.examples=d.meta.examples||0;this._save()}document.getElementById('trainStatus').textContent='Memoria importada. El núcleo base conserva sus parámetros deterministas.';this.updateStats()}catch(err){document.getElementById('trainStatus').textContent='Archivo de aprendizaje inválido.'}e.target.value='';}
+ downloadWeights(){const meta=this.model.exportMeta();const blob=new Blob([JSON.stringify(meta,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='qyrexai-weights-metadata.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);}
+}
+const app=new QyrexApp();
 window.addEventListener('DOMContentLoaded',()=>app.init());
-function send(){app.send()}
-function quick(t){document.getElementById('prompt').value=t;app.send()}
-function newChat(){app.newChat()}
-function openModel(){app.openModel()}
-function closeModel(){app.closeModel()}
-function trainStarter(){app.trainStarter()}
-function clearLearning(){app.clearLearning()}
-function exportModel(){app.exportModel()}
-function importModel(e){app.importModel(e)}
-function downloadWeights(){app.downloadWeights()}
+function send(){app.send()} function quick(t){document.getElementById('prompt').value=t;app.send()} function newChat(){app.newChat()} function openModel(){app.openModel()} function closeModel(){app.closeModel()} function trainStarter(){app.trainStarter()} function clearLearning(){app.clearLearning()} function exportModel(){app.exportModel()} function importModel(e){app.importModel(e)} function downloadWeights(){app.downloadWeights()}
 </script>
 </body>
 </html>

@@ -1,7 +1,9 @@
 {
   "name": "QyrexAI Local",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "external_apis": false,
-  "estimated_parameters": 4491840,
+  "parameters": 8388608,
+  "parameter_storage": "Float32Array",
+  "deployment": "Render Static Site",
   "entrypoint": "index.html"
 }

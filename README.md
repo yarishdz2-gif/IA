@@ -1,28 +1,24 @@
-# QyrexAI Local
+# QyrexAI Local 2.0 — Render / sin APIs
 
-QyrexAI Local es un proyecto de IA experimental pensado para ejecutarse sin APIs externas.
+IA experimental 100% local para desplegar como sitio estático en Render.
 
-## Lo que incluye
+## Núcleo
+- 8,388,608 parámetros reales en `Float32Array`.
+- Embeddings de 256 dimensiones.
+- 6 bloques neuronales locales.
+- Clasificación neural y similitud semántica.
+- Entrenamiento incremental en el navegador.
+- Memoria persistente con localStorage.
+- Sin OpenAI, Claude, Gemini ni APIs de inferencia.
 
-- UI local en `index.html`.
-- Núcleo neuronal local de aproximadamente 4.3 millones de parámetros.
-- Motor de generación híbrido para conversación, HTML, Luau, matemáticas, conocimiento y humor.
-- Memoria persistente en `localStorage`.
-- Entrenamiento local con un dataset inicial.
-- Exportación/importación de aprendizaje y pesos.
-- Sin llamadas a OpenAI, Gemini, Claude, Hugging Face ni otros servicios externos.
+## Render
+1. Sube este directorio a GitHub.
+2. En Render crea **Static Site**.
+3. Selecciona el repositorio.
+4. Build Command: vacío.
+5. Publish Directory: `.`
 
-## Importante
+También se incluye `render.yaml` para configuración declarativa.
 
-Tener millones de parámetros no significa automáticamente tener la capacidad de un LLM grande. Para que un modelo sea realmente capaz de conversar de forma abierta, esos pesos tienen que estar entrenados con un corpus grande y un proceso de entrenamiento serio. Esta versión deja el núcleo y el flujo local preparados para crecer, pero el conocimiento viene de un motor híbrido y un dataset de arranque.
-
-## Cómo abrir
-
-1. Extrae el ZIP.
-2. Abre `index.html` directamente en el navegador.
-3. En **Modelo** puedes entrenar el dataset inicial.
-4. El aprendizaje se guarda localmente en ese navegador.
-
-## Privacidad
-
-No se realizan peticiones de red desde el código del motor.
+## Nota técnica
+Millones de parámetros no garantizan por sí solos la inteligencia de un LLM de frontera. QyrexAI usa un núcleo neuronal local real combinado con memoria, herramientas deterministas y un dataset inicial. Para aumentar la calidad conversacional hace falta entrenar pesos con un corpus grande y datos de calidad.
