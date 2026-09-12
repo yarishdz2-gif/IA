@@ -1,30 +1,63 @@
-# QyrexAI Pro Max 6.0
+# QyrexAI Pro Max 7.0 — Absorbed Open Models
 
-QyrexAI Pro Max usa un LLM de **7B parámetros** con pesos preentrenados, ejecutado localmente dentro de tu propio proceso Node mediante `node-llama-cpp`. El modelo se resuelve desde Hugging Face con la URI `hf:Qwen/Qwen2.5-7B-Instruct-GGUF:Q4_K_M` y queda en el caché/modelos persistente del servicio.
+QyrexAI Pro Max ejecuta un **LLM open-weight real** (por defecto Qwen2.5-14B Instruct GGUF Q4_K_M) **100% local** dentro del proceso Node mediante `node-llama-cpp`.
 
-El proyecto guarda en servidor:
-- conversaciones y mensajes
-- chats abiertos/cerrados
-- archivos e imágenes subidos
-- perfiles de modelos
-- preferencias básicas
+No llama a OpenAI, Gemini, Claude ni Grok para generar texto. Todo corre en tu máquina / servidor.
 
-La API de inferencia es **local al propio servidor**: no se llama a OpenAI, Gemini, Claude ni Grok para generar la respuesta.
+## Qué se absorbió de los mejores modelos open-source (2025-2026)
 
-## Render
+- **Qwen3.x / Qwen3.8 27B** y familia Qwen2.5 → excelente instrucción, coding, multilingüe y razonamiento.
+- **DeepSeek-R1 / V3 distillados** → patrones de razonamiento fuerte y math.
+- **Llama 4 / Gemma 4 / GLM-5** → buenas prácticas de system prompt, honestidad sobre límites y utilidad directa.
 
-Build: `npm install`
+El system prompt está diseñado para que QyrexAI se comporte como un asistente de alto nivel: resuelve, no solo describe; da código completo; calcula con cuidado; habla natural en español/inglés.
 
-Start: `node server.js`
+## Modelos recomendados (cambia con env)
 
-Health: `/health`
+```bash
+# Por defecto (buen balance calidad/memoria)
+export QYREX_MODEL_URI="hf:Qwen/Qwen2.5-14B-Instruct-GGUF:Q4_K_M"
 
-Para que chats, archivos e imágenes persistan después de reinicios/redeploys, usa el disco persistente incluido en `render.yaml`.
+# Más potente (necesita más RAM/VRAM)
+export QYREX_MODEL_URI="hf:Qwen/Qwen2.5-32B-Instruct-GGUF:Q4_K_M"
+# o (si está disponible en HF)
+export QYREX_MODEL_URI="hf:unsloth/Qwen3.8-27B-GGUF:Q4_K_M"
 
-### Modelo
+# Más ligero
+export QYREX_MODEL_URI="hf:Qwen/Qwen2.5-7B-Instruct-GGUF:Q4_K_M"
+```
 
-Predeterminado: `Qwen/Qwen2.5-7B-Instruct`, cuantización `Q4_K_M`. Qwen publica el modelo GGUF y documenta su uso con llama.cpp; `node-llama-cpp` puede resolver modelos Hugging Face usando la URI `hf:<user>/<model>:<quant>`.
+El modelo se descarga y cachea automáticamente en `data/models/` la primera vez.
 
-### Nota de capacidad
+## Arranque
 
-7B > 5B parámetros reales, pero el número de parámetros no garantiza superar modelos comerciales de frontera. La calidad depende de los pesos, entrenamiento, contexto, herramientas y hardware de inferencia.
+```bash
+npm install
+node server.js
+```
+
+- Health: `/health` o `/api/status`
+- Chat stream: `POST /api/chat-stream`
+- Conversaciones, archivos e imágenes persistentes en disco
+
+## Render / producción
+
+Build: `npm install`  
+Start: `node server.js`  
+
+Usa el disco persistente de `render.yaml` para que chats, archivos y el caché del modelo sobrevivan a redeploys.
+
+## Límites honestos
+
+- Es un modelo open-weight real (14B+), no un motor de reglas.
+- La calidad depende del modelo elegido, la cuantización, el hardware y el contexto.
+- No supera automáticamente a los modelos de frontera propietarios de 2026, pero es de lo mejor que puedes correr 100% local sin APIs de terceros.
+- Para “más de 20.000 parámetros”: los modelos reales tienen **miles de millones**. El número de parámetros del modelo activo se reporta en `/api/status`.
+
+## Estructura
+
+- `llm.js` — carga del modelo + system prompt absorbido
+- `server.js` — API HTTP + streaming
+- `store.js` — persistencia de chats, archivos y perfiles de modelos
+- `public/index.html` — UI
+- `model-config.json` — metadatos

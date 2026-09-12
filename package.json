@@ -1,10 +1,16 @@
 {
-  "name":"qyrexai-pro-max-real",
-  "version":"6.0.0",
-  "private":true,
-  "type":"module",
-  "description":"QyrexAI Pro Max - 7B local LLM, persistent chats/files/images, Render-ready",
-  "scripts":{"start":"node server.js"},
-  "engines":{"node":">=20"},
-  "dependencies":{"node-llama-cpp":"3.20.0"}
+  "name": "qyrexai-pro-max-real",
+  "version": "7.0.0",
+  "private": true,
+  "type": "module",
+  "description": "QyrexAI Pro Max 7.0 - strong open-weight local LLM (Qwen 14B+), persistent chats/files, Render-ready. Absorbs best practices from top 2026 open models.",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "node-llama-cpp": "3.20.0"
+  }
 }
