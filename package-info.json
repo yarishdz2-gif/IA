@@ -1,0 +1,7 @@
+{
+  "name": "QyrexAI Local",
+  "version": "1.0.0",
+  "external_apis": false,
+  "estimated_parameters": 4491840,
+  "entrypoint": "index.html"
+}

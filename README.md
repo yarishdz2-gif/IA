@@ -1,63 +1,28 @@
-# QyrexAI Workspace v3.0 (OpenRouter)
+# QyrexAI Local
 
-Chat workspace moderno con proxy seguro a **OpenRouter**.
+QyrexAI Local es un proyecto de IA experimental pensado para ejecutarse sin APIs externas.
 
-## Despliegue en Render
+## Lo que incluye
 
-1. Crea un nuevo **Web Service** y conecta este repositorio (o sube los archivos).
-2. **Build Command**: `npm install`
-3. **Start Command**: `npm start`
-4. En **Environment** agrega la variable:
+- UI local en `index.html`.
+- Núcleo neuronal local de aproximadamente 4.3 millones de parámetros.
+- Motor de generación híbrido para conversación, HTML, Luau, matemáticas, conocimiento y humor.
+- Memoria persistente en `localStorage`.
+- Entrenamiento local con un dataset inicial.
+- Exportación/importación de aprendizaje y pesos.
+- Sin llamadas a OpenAI, Gemini, Claude, Hugging Face ni otros servicios externos.
 
-   ```
-   OPENROUTER_API_KEY = sk-or-v1-xxxxxxxxxxxxxxxxxxxxxxxx
-   ```
+## Importante
 
-   (Opcional)
-   ```
-   OPENROUTER_SITE_URL = https://tu-app.onrender.com
-   OPENROUTER_SITE_NAME = QyrexAI Workspace
-   NODE_ENV = production
-   ```
+Tener millones de parámetros no significa automáticamente tener la capacidad de un LLM grande. Para que un modelo sea realmente capaz de conversar de forma abierta, esos pesos tienen que estar entrenados con un corpus grande y un proceso de entrenamiento serio. Esta versión deja el núcleo y el flujo local preparados para crecer, pero el conocimiento viene de un motor híbrido y un dataset de arranque.
 
-5. Deploy.
+## Cómo abrir
 
-## Variables de entorno
+1. Extrae el ZIP.
+2. Abre `index.html` directamente en el navegador.
+3. En **Modelo** puedes entrenar el dataset inicial.
+4. El aprendizaje se guarda localmente en ese navegador.
 
-| Variable                | Requerida | Descripción                                      |
-|-------------------------|-----------|--------------------------------------------------|
-| `OPENROUTER_API_KEY`    | ✅ Sí     | Tu API Key de https://openrouter.ai/settings/keys |
-| `OPENROUTER_SITE_URL`   | No        | URL de tu app (para rankings de OpenRouter)      |
-| `OPENROUTER_SITE_NAME`  | No        | Nombre de tu app                                 |
-| `PORT`                  | No        | Render lo pone automáticamente                   |
-| `NODE_ENV`              | No        | `production` recomendado                         |
+## Privacidad
 
-## Modelos incluidos
-
-- **🔥 El Mejor** → `meta-llama/llama-3.3-70b-instruct`
-- **⚡ El Fast** → `google/gemini-2.5-flash`
-- **🧠 DeepSeek Chat** → `deepseek/deepseek-chat`
-- **⚖️ El Medio** → `mistralai/mixtral-8x7b-instruct`
-- **💻 GPT-4o Mini** → `openai/gpt-4o-mini`
-- **🆓 Free Models Router** → `openrouter/free` (elige automáticamente un modelo gratis disponible)
-
-Puedes cambiar o añadir más modelos editando el `<select id="model-select">` en `index.html`.
-
-## Desarrollo local
-
-```bash
-cp .env.example .env   # crea el archivo y pon tu key
-npm install
-npm start
-```
-
-Luego abre http://localhost:3000
-
-## Características
-
-- Proxy seguro (la API key nunca sale del servidor)
-- Soporte de imágenes y archivos adjuntos (multimodal)
-- Historial de chats en localStorage
-- Scratchpad, export JSON, temperature y system prompt configurables
-- UI dark moderna con Tailwind + Highlight.js + Marked
-- Health check: `GET /api/health`
+No se realizan peticiones de red desde el código del motor.

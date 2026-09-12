@@ -1,1080 +1,152 @@
 <!DOCTYPE html>
-<html lang="es" class="dark h-full">
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grok 3 Ultra - xAI Next-Gen Interface</title>
-
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        grok: {
-                            bg: '#050508',
-                            panel: '#0c0d14',
-                            card: '#121420',
-                            hover: '#1a1d2e',
-                            border: '#22263d',
-                            accent: '#ffffff',
-                            cyan: '#00f0ff',
-                            purple: '#9d4edd',
-                            glow: 'rgba(0, 240, 255, 0.15)'
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'Fira Code', 'Consolas', 'monospace']
-                    },
-                    animation: {
-                        'pulse-glow': 'pulseGlow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                        'orb-float': 'orbFloat 8s ease-in-out infinite',
-                        'scanline': 'scanline 8s linear infinite'
-                    },
-                    keyframes: {
-                        pulseGlow: {
-                            '0%, 100%': { opacity: '0.4', filter: 'blur(20px)' },
-                            '50%': { opacity: '0.8', filter: 'blur(28px)' }
-                        },
-                        orbFloat: {
-                            '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
-                            '50%': { transform: 'translate(10px, -15px) scale(1.05)' }
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-
-    <!-- Icons & Third-party Libraries -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/tokyo-night-dark.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-
-    <!-- Custom Styles -->
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
-
-        ::-webkit-scrollbar {
-            width: 5px;
-            height: 5px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #050508;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #1e2238;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #00f0ff;
-        }
-
-        .glass-panel {
-            background: rgba(12, 13, 20, 0.75);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .glass-card {
-            background: rgba(18, 20, 32, 0.6);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .grok-glow-cyan {
-            box-shadow: 0 0 25px rgba(0, 240, 255, 0.18);
-        }
-
-        .grok-glow-purple {
-            box-shadow: 0 0 25px rgba(157, 78, 221, 0.18);
-        }
-
-        /* Markdown styling overrides */
-        .markdown-content p { margin-bottom: 0.75rem; line-height: 1.6; }
-        .markdown-content h1, .markdown-content h2, .markdown-content h3 { font-weight: 700; color: #fff; margin-top: 1rem; margin-bottom: 0.5rem; }
-        .markdown-content ul { list-style-type: disc; padding-left: 1.25rem; margin-bottom: 0.75rem; }
-        .markdown-content ol { list-style-type: decimal; padding-left: 1.25rem; margin-bottom: 0.75rem; }
-        .markdown-content code:not(pre code) { background: rgba(0,240,255,0.1); color: #00f0ff; padding: 0.15rem 0.35rem; border-radius: 0.25rem; font-size: 0.875em; font-family: 'JetBrains Mono', monospace; }
-        .markdown-content blockquote { border-left: 3px solid #00f0ff; padding-left: 1rem; color: #a0aec0; italic; margin-bottom: 0.75rem; }
-        .markdown-content table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; font-size: 0.875rem; }
-        .markdown-content th, .markdown-content td { border: 1px solid #22263d; padding: 0.5rem 0.75rem; text-align: left; }
-        .markdown-content th { background: rgba(255,255,255,0.05); }
-
-        /* Animated grid background */
-        .bg-grid-pattern {
-            background-size: 32px 32px;
-            background-image: 
-                linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>QyrexAI — Local Neural</title>
+<style>
+:root{
+  --bg:#09090c;--bg2:#101116;--bg3:#171922;--panel:#12141a;--bd:#262a35;
+  --tx:#ececf1;--mu:#8f95a5;--violet:#8b5cf6;--cyan:#48d9ff;--green:#62e6a7;--red:#ff6874
+}
+*{box-sizing:border-box}html,body{height:100%;margin:0;background:var(--bg);color:var(--tx);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif}
+button,textarea,input{font:inherit}button{cursor:pointer}
+body{display:flex;overflow:hidden}
+::-webkit-scrollbar{width:7px}::-webkit-scrollbar-thumb{background:#303441;border-radius:10px}
+.app{display:flex;width:100%;height:100%}
+.sidebar{width:250px;flex:0 0 250px;border-right:1px solid var(--bd);background:linear-gradient(180deg,#101117,#0d0e12);display:flex;flex-direction:column}
+.brand{height:64px;padding:0 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px}
+.logo{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--violet),#4c1d95 70%,#141021);display:grid;place-items:center;font-weight:900;box-shadow:0 0 28px #8b5cf633}
+.brand b{font-size:14px}.brand small{display:block;color:var(--mu);font-size:10px;margin-top:2px}
+.nav{padding:12px;flex:1;overflow:auto}.group{color:#667083;font-size:9px;letter-spacing:.14em;text-transform:uppercase;padding:12px 9px 6px}
+.nav button,.mini-btn{border:1px solid transparent;background:transparent;color:#adb3c1;width:100%;text-align:left;padding:9px 10px;border-radius:10px;font-size:12px}
+.nav button:hover,.nav button.active{background:#1a1d26;border-color:#2c3040;color:white}
+.sidebar-footer{padding:12px;border-top:1px solid var(--bd);font-size:10px;color:var(--mu);display:grid;gap:7px}
+.status-line{display:flex;align-items:center;gap:7px}.dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 10px #62e6a788}
+.main{min-width:0;flex:1;display:flex;flex-direction:column}
+.top{height:64px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;padding:0 18px;background:#0c0d11}
+.top-left{display:flex;gap:10px;align-items:center}.top-title{font-size:13px;font-weight:700}.chip{font-size:9px;padding:4px 7px;border:1px solid #2f3442;border-radius:99px;color:#9ca3b7;background:#12141a}
+.top-right{display:flex;gap:8px;align-items:center}
+.icon-btn{border:1px solid #2a2f3c;background:#11131a;color:#cfd4df;padding:7px 9px;border-radius:9px;font-size:11px}
+.icon-btn:hover{background:#191c24}
+.chat{flex:1;overflow:auto}.chat-inner{width:min(900px,100%);margin:auto;padding:30px 20px 120px;display:grid;gap:18px}
+.row{display:flex;gap:11px;align-items:flex-start}.row.user{justify-content:flex-end}
+.avatar{width:31px;height:31px;flex:0 0 31px;border-radius:10px;display:grid;place-items:center;font-size:10px;font-weight:900}
+.avatar.ai{background:linear-gradient(135deg,var(--violet),#4c1d95)}.avatar.user{background:#252934}
+.msg{max-width:84%;border:1px solid var(--bd);border-radius:16px;padding:12px 14px;font-size:13px;line-height:1.65;background:#101217}
+.row.user .msg{background:#1a1725;border-color:#373043}.meta{font-size:9px;color:#73798a;border-bottom:1px solid var(--bd);padding-bottom:7px;margin-bottom:9px}
+.msg pre{overflow:auto;background:#0b0c0f;border:1px solid #252936;border-radius:11px;padding:12px;font-size:12px}
+.msg code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.thinking{font-size:10px;color:#72ddb3;margin-bottom:7px}
+.composer{position:fixed;left:250px;right:0;bottom:0;padding:12px 18px;background:linear-gradient(180deg,transparent,#09090cef 26% 100%);pointer-events:none}
+.composer-inner{width:min(900px,100%);margin:auto;pointer-events:auto}
+.inputbox{display:flex;gap:9px;align-items:flex-end;background:#11131a;border:1px solid #2a2f3c;border-radius:17px;padding:9px;box-shadow:0 12px 40px #00000055}
+textarea{flex:1;resize:none;max-height:160px;background:transparent;border:0;outline:0;color:#f4f4f6;padding:7px 8px;line-height:1.45}.send{border:0;color:white;padding:9px 14px;border-radius:11px;background:linear-gradient(135deg,#7c3aed,#a855f7);font-size:12px;font-weight:700}
+.send:hover{filter:brightness(1.08)}
+.overlay{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;padding:20px}.overlay.show{display:flex}
+.modal{width:min(760px,100%);max-height:85vh;overflow:auto;background:#11131a;border:1px solid #2a2f3c;border-radius:18px;box-shadow:0 30px 90px #000b}
+.modal-head{padding:16px 18px;border-bottom:1px solid #2a2f3c;display:flex;justify-content:space-between;align-items:center}.modal-body{padding:18px;display:grid;gap:12px}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.stat{border:1px solid #282d3b;background:#0e1016;padding:12px;border-radius:12px}.stat b{display:block;font-size:16px}.stat span{font-size:9px;color:#7c8495}
+.progress{height:7px;background:#0a0b0f;border-radius:99px;overflow:hidden}.progress i{display:block;height:100%;background:linear-gradient(90deg,var(--violet),var(--cyan));width:0}
+.control-row{display:flex;gap:8px;flex-wrap:wrap}.control-row button{border:1px solid #2a3040;background:#161923;color:#d7dbea;padding:8px 10px;border-radius:9px;font-size:11px}.control-row button:hover{background:#1d202c}
+.notice{font-size:11px;line-height:1.5;color:#98a0b1;border:1px solid #2a3040;border-radius:11px;padding:10px;background:#0d0f14}
+@media(max-width:760px){
+ .sidebar{display:none}.composer{left:0}.top{padding:0 12px}.chat-inner{padding-left:11px;padding-right:11px}.msg{max-width:90%}
+ .stat-grid{grid-template-columns:1fr 1fr}
+}
+</style>
 </head>
-<body class="bg-grok-bg text-zinc-100 font-sans h-screen flex flex-col overflow-hidden select-none bg-grid-pattern">
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">Q</div>
+      <div><b>QyrexAI</b><small>Local Neural · sin APIs</small></div>
+    </div>
+    <div class="nav">
+      <button onclick="newChat()">＋ Nueva charla</button>
+      <div class="group">Laboratorio</div>
+      <button onclick="quick('hola')">Conversación</button>
+      <button onclick="quick('haz un html que diga Hola XD')">HTML</button>
+      <button onclick="quick('dame un script anti afk en luau')">Luau</button>
+      <button onclick="quick('cuanto es 144/12')">Matemáticas</button>
+      <button onclick="quick('explica la fotosíntesis')">Ciencia</button>
+      <button onclick="quick('qué es Docker')">Tecnología</button>
+      <button onclick="quick('cuéntame un chiste')">Humor</button>
+      <div class="group">Motor</div>
+      <button onclick="openModel()">⚙ Estado del modelo</button>
+      <button onclick="exportModel()">⇩ Exportar aprendizaje</button>
+      <button onclick="document.getElementById('importFile').click()">⇧ Importar aprendizaje</button>
+      <input id="importFile" type="file" accept=".json" hidden onchange="importModel(event)">
+    </div>
+    <div class="sidebar-footer">
+      <div class="status-line"><span class="dot"></span><span id="stateText">Modelo local activo</span></div>
+      <div>Turnos: <b id="turns">0</b></div>
+      <div>Parámetros: <b id="paramsSide">0</b></div>
+      <div>Memoria: <b id="memorySide">0</b></div>
+    </div>
+  </aside>
 
-    <!-- MAIN NAVIGATION HEADER -->
-    <header class="h-14 border-b border-grok-border glass-panel px-4 flex items-center justify-between z-30 shrink-0">
-        <!-- Left: Logo & Sidebar Toggle -->
-        <div class="flex items-center gap-3">
-            <button id="toggleSidebarBtn" class="p-2 rounded-lg hover:bg-grok-hover text-zinc-400 hover:text-white transition-all">
-                <i data-lucide="panel-left-close" class="w-5 h-5"></i>
-            </button>
-            <div class="flex items-center gap-2.5 cursor-pointer" onclick="resetToNewChat()">
-                <div class="relative w-8 h-8 rounded-lg bg-black border border-zinc-700 flex items-center justify-center overflow-hidden group">
-                    <div class="absolute inset-0 bg-gradient-to-tr from-grok-cyan to-grok-purple opacity-30 group-hover:opacity-60 transition-opacity"></div>
-                    <span class="font-mono font-black text-lg tracking-tighter text-white z-10">𝕏</span>
-                </div>
-                <div class="flex flex-col">
-                    <div class="flex items-center gap-1.5">
-                        <span class="font-bold tracking-tight text-white font-mono">GROK <span class="text-xs px-1.5 py-0.5 rounded bg-grok-cyan/20 text-grok-cyan border border-grok-cyan/30">3.0 ULTRA</span></span>
-                    </div>
-                    <span class="text-[10px] text-zinc-500 tracking-wider">xAI INTELLIGENCE ENGINE</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Center: Engine & Intelligence Selector -->
-        <div class="hidden md:flex items-center gap-1 bg-black/60 p-1 rounded-xl border border-grok-border">
-            <button id="modeGrokStandard" onclick="switchMode('standard')" class="mode-tab flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-grok-hover text-white shadow-sm">
-                <i data-lucide="zap" class="w-3.5 h-3.5 text-grok-cyan"></i>
-                <span>Grok 3</span>
-            </button>
-            <button id="modeGrokThinking" onclick="switchMode('thinking')" class="mode-tab flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-zinc-400 hover:text-white hover:bg-grok-hover">
-                <i data-lucide="brain-circuit" class="w-3.5 h-3.5 text-purple-400"></i>
-                <span>Thinking Process</span>
-            </button>
-            <button id="modeGrokDeepSearch" onclick="switchMode('deepsearch')" class="mode-tab flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-zinc-400 hover:text-white hover:bg-grok-hover">
-                <i data-lucide="globe" class="w-3.5 h-3.5 text-emerald-400"></i>
-                <span>DeepSearch</span>
-            </button>
-            <button id="modeGrokFun" onclick="switchMode('fun')" class="mode-tab flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-zinc-400 hover:text-white hover:bg-grok-hover">
-                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-pink-400"></i>
-                <span>Unhinged Mode</span>
-            </button>
-        </div>
-
-        <!-- Right: Actions & Tools -->
-        <div class="flex items-center gap-2">
-            <button id="toggleArtifactBtn" onclick="toggleArtifactPanel()" class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-grok-border bg-black/40 hover:bg-grok-hover text-zinc-300 hover:text-white text-xs font-medium transition-all">
-                <i data-lucide="code-2" class="w-4 h-4 text-grok-cyan"></i>
-                <span class="hidden sm:inline">Canvas / Code</span>
-            </button>
-            <button onclick="openSettingsModal()" class="p-2 rounded-lg hover:bg-grok-hover text-zinc-400 hover:text-white transition-all" title="Settings">
-                <i data-lucide="sliders" class="w-5 h-5"></i>
-            </button>
-        </div>
+  <main class="main">
+    <header class="top">
+      <div class="top-left">
+        <div class="top-title">QyrexAI</div><div class="chip">OFFLINE</div><div class="chip">NO API</div>
+      </div>
+      <div class="top-right">
+        <button class="icon-btn" onclick="openModel()">Modelo</button>
+      </div>
     </header>
+    <section class="chat" id="chat">
+      <div class="chat-inner" id="chatInner"></div>
+    </section>
+  </main>
+</div>
 
-    <!-- MAIN WORKSPACE CONTAINERS -->
-    <div class="flex-1 flex overflow-hidden relative">
-
-        <!-- SIDEBAR: Conversation History -->
-        <aside id="sidebar" class="w-72 bg-grok-panel border-r border-grok-border flex flex-col shrink-0 transition-all duration-300 z-20 absolute md:relative inset-y-0 left-0 -translate-x-full md:translate-x-0">
-            <!-- Sidebar Header -->
-            <div class="p-3 border-b border-grok-border flex items-center justify-between">
-                <button onclick="resetToNewChat()" class="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-white/10 hover:bg-white/15 text-white font-medium text-xs border border-white/10 transition-all shadow-sm group">
-                    <i data-lucide="plus" class="w-4 h-4 text-grok-cyan group-hover:scale-125 transition-transform"></i>
-                    <span>New Thread</span>
-                </button>
-            </div>
-
-            <!-- Search Chats -->
-            <div class="p-2 border-b border-grok-border/50">
-                <div class="relative">
-                    <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-2.5 text-zinc-500"></i>
-                    <input id="searchHistoryInput" type="text" placeholder="Search conversations..." oninput="filterHistory()" class="w-full bg-black/50 border border-grok-border rounded-lg pl-8 pr-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-grok-cyan transition-all">
-                </div>
-            </div>
-
-            <!-- History List -->
-            <div id="historyList" class="flex-1 overflow-y-auto p-2 space-y-1">
-                <!-- Populated dynamically -->
-            </div>
-
-            <!-- Sidebar Footer -->
-            <div class="p-3 border-t border-grok-border flex items-center justify-between text-xs text-zinc-400 bg-black/40">
-                <div class="flex items-center gap-2">
-                    <div class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></div>
-                    <span class="font-mono text-[11px]">xAI Node #709-OK</span>
-                </div>
-                <button onclick="clearAllHistory()" class="p-1.5 hover:bg-red-500/10 hover:text-red-400 rounded transition-all" title="Clear All History">
-                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                </button>
-            </div>
-        </aside>
-
-        <!-- CHAT AREA CONTAINER -->
-        <main class="flex-1 flex flex-col min-w-0 bg-grok-bg relative">
-            
-            <!-- Dynamic Background Canvas (Interactive Grok Core) -->
-            <canvas id="orbCanvas" class="absolute inset-0 w-full h-full pointer-events-none opacity-40 z-0"></canvas>
-
-            <!-- CHAT MESSAGES DISPLAY -->
-            <div id="chatMessages" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 relative z-10 scroll-smooth max-w-4xl w-full mx-auto">
-                
-                <!-- HERO / EMPTY STATE -->
-                <div id="heroState" class="h-full flex flex-col items-center justify-center text-center px-4 py-12 my-auto">
-                    <!-- Glowing xAI Core Orb Animation -->
-                    <div class="relative w-28 h-28 mb-6 flex items-center justify-center">
-                        <div class="absolute inset-0 rounded-full bg-gradient-to-r from-grok-cyan to-grok-purple blur-xl opacity-40 animate-pulse-glow"></div>
-                        <div class="relative w-20 h-20 rounded-2xl bg-black border border-grok-cyan/50 flex items-center justify-center shadow-2xl animate-orb-float">
-                            <i data-lucide="bot" class="w-10 h-10 text-grok-cyan"></i>
-                        </div>
-                    </div>
-
-                    <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-2 font-mono">
-                        WHAT DO YOU WANT TO KNOW?
-                    </h1>
-                    <p class="text-zinc-400 text-sm max-w-md mb-8">
-                        Powered by Grok 3 Ultra architecture. Real-time web analysis, deep reasoning, and high-speed code generation.
-                    </p>
-
-                    <!-- Quick Prompt Chips -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl w-full text-left">
-                        <button onclick="usePrompt('Explicar computación cuántica como si tuviera 10 años y luego dame un código interactivo')" class="glass-card p-3.5 rounded-xl border border-grok-border hover:border-grok-cyan/50 hover:bg-grok-hover transition-all text-xs group">
-                            <div class="flex items-center gap-2 text-grok-cyan mb-1 font-semibold">
-                                <i data-lucide="atom" class="w-4 h-4"></i>
-                                <span>Quantum Science & Code</span>
-                            </div>
-                            <p class="text-zinc-400 text-[11px] line-clamp-2">Explicar computación cuántica y generar una simulación interactiva en HTML.</p>
-                        </button>
-
-                        <button onclick="usePrompt('DeepSearch: ¿Cuáles son las últimas noticias e innovaciones en Inteligencia Artificial esta semana?')" class="glass-card p-3.5 rounded-xl border border-grok-border hover:border-emerald-500/50 hover:bg-grok-hover transition-all text-xs group">
-                            <div class="flex items-center gap-2 text-emerald-400 mb-1 font-semibold">
-                                <i data-lucide="globe" class="w-4 h-4"></i>
-                                <span>Real-time DeepSearch</span>
-                            </div>
-                            <p class="text-zinc-400 text-[11px] line-clamp-2">Investigar la web en tiempo real para recopilar descubrimientos recientes de IA.</p>
-                        </button>
-
-                        <button onclick="usePrompt('Construye un juego de Snake completo en un solo archivo con gráficos neon cyberpunk')" class="glass-card p-3.5 rounded-xl border border-grok-border hover:border-purple-500/50 hover:bg-grok-hover transition-all text-xs group">
-                            <div class="flex items-center gap-2 text-purple-400 mb-1 font-semibold">
-                                <i data-lucide="gamepad-2" class="w-4 h-4"></i>
-                                <span>Cyberpunk Web App</span>
-                            </div>
-                            <p class="text-zinc-400 text-[11px] line-clamp-2">Generar un juego interactivo ejecutable en el panel de Canvas.</p>
-                        </button>
-
-                        <button onclick="usePrompt('Modo Sin Filtro: ¿Por qué los humanos están obsesionados con la IA y cuál es nuestro futuro?')" class="glass-card p-3.5 rounded-xl border border-grok-border hover:border-pink-500/50 hover:bg-grok-hover transition-all text-xs group">
-                            <div class="flex items-center gap-2 text-pink-400 mb-1 font-semibold">
-                                <i data-lucide="flame" class="w-4 h-4"></i>
-                                <span>Unhinged Perspective</span>
-                            </div>
-                            <p class="text-zinc-400 text-[11px] line-clamp-2">Perspectiva mordaz, divertida y directa sin filtros convencionales.</p>
-                        </button>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- INPUT BOX CONTAINER -->
-            <div class="p-3 sm:p-4 border-t border-grok-border glass-panel relative z-20 shrink-0">
-                <div class="max-w-4xl mx-auto space-y-2">
-                    
-                    <!-- Mode Status Pill Indicator -->
-                    <div class="flex items-center justify-between text-[11px] text-zinc-400 px-1">
-                        <div class="flex items-center gap-2">
-                            <span id="activeModeBadge" class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-grok-cyan/10 text-grok-cyan border border-grok-cyan/20 font-mono">
-                                <i data-lucide="zap" class="w-3 h-3"></i> Grok 3 Ultra
-                            </span>
-                            <span id="thinkingBadge" class="hidden flex items-center gap-1 text-purple-400 font-mono">
-                                <i data-lucide="brain" class="w-3 h-3 animate-spin"></i> Reasoning Active
-                            </span>
-                        </div>
-                        <span id="charCounter" class="font-mono text-zinc-500">0 / 4000</span>
-                    </div>
-
-                    <!-- Input Form -->
-                    <div class="relative bg-black/70 rounded-2xl border border-grok-border focus-within:border-grok-cyan focus-within:ring-1 focus-within:ring-grok-cyan/40 transition-all shadow-xl">
-                        
-                        <textarea id="userInput" rows="2" placeholder="Ask Grok anything or build code..." onkeydown="handleKeyDown(event)" oninput="updateCharCounter()" class="w-full bg-transparent px-4 py-3 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none resize-none min-h-[52px] max-h-48 scrollbar-thin"></textarea>
-
-                        <!-- Input Toolbar Controls -->
-                        <div class="flex items-center justify-between px-3 py-2 border-t border-zinc-800/80 bg-black/40 rounded-b-2xl">
-                            <div class="flex items-center gap-1">
-                                <!-- Voice Input Mic -->
-                                <button id="micBtn" onclick="toggleVoiceInput()" class="p-2 rounded-lg hover:bg-grok-hover text-zinc-400 hover:text-grok-cyan transition-all" title="Voice Input (Speech-to-Text)">
-                                    <i data-lucide="mic" class="w-4 h-4"></i>
-                                </button>
-                                
-                                <!-- Attach File/Image -->
-                                <button onclick="triggerFileInput()" class="p-2 rounded-lg hover:bg-grok-hover text-zinc-400 hover:text-white transition-all" title="Attach Context or Images">
-                                    <i data-lucide="paperclip" class="w-4 h-4"></i>
-                                </button>
-                                <input type="file" id="fileInput" class="hidden" onchange="handleFileUpload(event)">
-
-                                <!-- Fast Image Gen Toggle -->
-                                <button id="imgGenToggle" onclick="toggleImageGenMode()" class="p-2 rounded-lg hover:bg-grok-hover text-zinc-400 hover:text-purple-400 transition-all" title="Generate Image Mode">
-                                    <i data-lucide="image" class="w-4 h-4"></i>
-                                </button>
-                            </div>
-
-                            <!-- Submit Button -->
-                            <div class="flex items-center gap-2">
-                                <button id="sendBtn" onclick="sendMessage()" class="flex items-center justify-center w-9 h-9 rounded-xl bg-white text-black font-bold hover:bg-grok-cyan transition-all shadow-lg hover:scale-105 disabled:opacity-50 disabled:hover:scale-100">
-                                    <i data-lucide="arrow-up" class="w-5 h-5"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
-
-        <!-- SIDE DRAWER: Artifact Canvas / Code Executor -->
-        <div id="artifactPanel" class="w-full lg:w-1/2 bg-grok-panel border-l border-grok-border flex flex-col shrink-0 transition-all duration-300 z-20 translate-x-full absolute right-0 inset-y-0 hidden">
-            <!-- Artifact Header -->
-            <div class="h-12 border-b border-grok-border px-4 flex items-center justify-between bg-black/60">
-                <div class="flex items-center gap-2">
-                    <i data-lucide="code" class="w-4 h-4 text-grok-cyan"></i>
-                    <span id="artifactTitle" class="font-mono text-xs font-bold text-white truncate max-w-[200px]">Live Artifact Sandbox</span>
-                </div>
-                
-                <!-- View Mode Tabs -->
-                <div class="flex items-center gap-1 bg-black p-1 rounded-lg border border-grok-border">
-                    <button id="artifactTabPreview" onclick="setArtifactTab('preview')" class="px-2.5 py-1 rounded text-xs font-medium bg-grok-hover text-white transition-all">
-                        Preview
-                    </button>
-                    <button id="artifactTabCode" onclick="setArtifactTab('code')" class="px-2.5 py-1 rounded text-xs font-medium text-zinc-400 hover:text-white transition-all">
-                        Source Code
-                    </button>
-                </div>
-
-                <!-- Actions -->
-                <div class="flex items-center gap-1">
-                    <button onclick="copyArtifactCode()" class="p-1.5 rounded hover:bg-grok-hover text-zinc-400 hover:text-white" title="Copy Code">
-                        <i data-lucide="copy" class="w-4 h-4"></i>
-                    </button>
-                    <button onclick="toggleArtifactPanel()" class="p-1.5 rounded hover:bg-grok-hover text-zinc-400 hover:text-white" title="Close Panel">
-                        <i data-lucide="x" class="w-4 h-4"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Artifact Content Frame -->
-            <div class="flex-1 relative bg-black overflow-hidden">
-                <!-- Preview Iframe -->
-                <iframe id="artifactIframe" class="w-full h-full border-0 bg-white" sandbox="allow-scripts allow-modals"></iframe>
-                
-                <!-- Code Editor View (Hidden by default) -->
-                <div id="artifactCodeView" class="hidden absolute inset-0 overflow-auto p-4 bg-zinc-950 font-mono text-xs text-zinc-200">
-                    <pre><code id="artifactCodeText" class="language-html"></code></pre>
-                </div>
-            </div>
-        </div>
+<div class="composer">
+  <div class="composer-inner">
+    <div class="inputbox">
+      <textarea id="prompt" rows="1" placeholder="Escribe lo que quieras… Enter envía"></textarea>
+      <button class="send" onclick="send()">Enviar</button>
     </div>
+  </div>
+</div>
 
-    <!-- SETTINGS MODAL -->
-    <div id="settingsModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-200">
-        <div class="bg-grok-panel border border-grok-border rounded-2xl w-full max-w-lg p-6 space-y-5 shadow-2xl relative">
-            <div class="flex items-center justify-between border-b border-grok-border pb-3">
-                <div class="flex items-center gap-2">
-                    <i data-lucide="sliders" class="w-5 h-5 text-grok-cyan"></i>
-                    <h3 class="font-bold text-white text-base">Grok System Configuration</h3>
-                </div>
-                <button onclick="closeSettingsModal()" class="text-zinc-400 hover:text-white">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-
-            <!-- Custom System Prompt -->
-            <div class="space-y-2">
-                <label class="text-xs font-semibold text-zinc-300">Custom System Instruction</label>
-                <textarea id="sysPromptInput" rows="3" class="w-full bg-black/60 border border-grok-border rounded-xl p-3 text-xs text-zinc-200 focus:outline-none focus:border-grok-cyan" placeholder="Define Grok's custom persona or instructions..."></textarea>
-            </div>
-
-            <!-- Temperature Slider -->
-            <div class="space-y-2">
-                <div class="flex justify-between text-xs">
-                    <span class="font-semibold text-zinc-300">Temperature (Creativity)</span>
-                    <span id="tempVal" class="font-mono text-grok-cyan">0.7</span>
-                </div>
-                <input id="tempSlider" type="range" min="0" max="1" step="0.1" value="0.7" oninput="document.getElementById('tempVal').innerText = this.value" class="w-full accent-grok-cyan bg-zinc-800 rounded-lg">
-            </div>
-
-            <!-- Voice TTS Prebuilt Voice Selector -->
-            <div class="space-y-2">
-                <label class="text-xs font-semibold text-zinc-300">Text-To-Speech Audio Voice</label>
-                <select id="voiceSelect" class="w-full bg-black/60 border border-grok-border rounded-xl p-2.5 text-xs text-zinc-200 focus:outline-none focus:border-grok-cyan">
-                    <option value="Zephyr">Zephyr (Bright & Energetic)</option>
-                    <option value="Kore">Kore (Firm & Crisp)</option>
-                    <option value="Puck">Puck (Upbeat)</option>
-                    <option value="Charon">Charon (Deep & Informative)</option>
-                    <option value="Fenrir">Fenrir (Excitable)</option>
-                </select>
-            </div>
-
-            <!-- Modal Actions -->
-            <div class="flex justify-end gap-2 pt-2 border-t border-grok-border">
-                <button onclick="closeSettingsModal()" class="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-medium text-white transition-all">Save & Close</button>
-            </div>
-        </div>
+<div class="overlay" id="modelOverlay" onclick="if(event.target===this)closeModel()">
+ <div class="modal">
+  <div class="modal-head"><div><b>Motor neuronal local</b><div style="font-size:10px;color:#858c9e;margin-top:2px">Entrenamiento e inferencia dentro de este navegador</div></div><button class="icon-btn" onclick="closeModel()">Cerrar</button></div>
+  <div class="modal-body">
+    <div class="stat-grid">
+      <div class="stat"><b id="statParams">0</b><span>parámetros totales</span></div>
+      <div class="stat"><b id="statTrainable">0</b><span>parámetros adaptativos</span></div>
+      <div class="stat"><b id="statMemory">0</b><span>memorias guardadas</span></div>
     </div>
-
-    <script>
-        // APP STATE
-        let conversations = JSON.parse(localStorage.getItem('grok_chats') || '[]');
-        let currentChatId = null;
-        let currentMode = 'standard'; // standard, thinking, deepsearch, fun
-        let isGenerating = false;
-        let isImageGenMode = false;
-        let artifactContent = '';
-        let recognition = null;
-        let isRecording = false;
-
-        // GEMINI API CONSTANTS (Built-in Web Engine)
-        const GEMINI_API_KEY = ""; // Standard runtime auto-resolution
-        const GEMINI_TEXT_MODEL = "gemini-3-flash-preview";
-        const GEMINI_IMAGE_MODEL = "gemini-3.1-flash-image";
-        const GEMINI_TTS_MODEL = "gemini-2.5-flash-preview-tts";
-
-        // INITIALIZATION
-        window.addEventListener('DOMContentLoaded', () => {
-            lucide.createIcons();
-            initOrbAnimation();
-            renderHistoryList();
-            setupVoiceRecognition();
-            
-            // Auto focus input
-            document.getElementById('userInput').focus();
-        });
-
-        function initOrbAnimation() {
-            const canvas = document.getElementById('orbCanvas');
-            const ctx = canvas.getContext('2d');
-            let width = canvas.width = canvas.offsetWidth;
-            let height = canvas.height = canvas.offsetHeight;
-
-            window.addEventListener('resize', () => {
-                width = canvas.width = canvas.offsetWidth;
-                height = canvas.height = canvas.offsetHeight;
-            });
-
-            const particles = [];
-            for (let i = 0; i < 40; i++) {
-                particles.push({
-                    x: Math.random() * width,
-                    y: Math.random() * height,
-                    radius: Math.random() * 2 + 1,
-                    vx: (Math.random() - 0.5) * 0.5,
-                    vy: (Math.random() - 0.5) * 0.5,
-                    color: Math.random() > 0.5 ? 'rgba(0, 240, 255, ' : 'rgba(157, 78, 221, '
-                });
-            }
-
-            function animate() {
-                ctx.clearRect(0, 0, width, height);
-
-                particles.forEach(p => {
-                    p.x += p.vx;
-                    p.y += p.vy;
-
-                    if (p.x < 0 || p.x > width) p.vx *= -1;
-                    if (p.y < 0 || p.y > height) p.vy *= -1;
-
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                    ctx.fillStyle = p.color + '0.4)';
-                    ctx.fill();
-                });
-
-                requestAnimationFrame(animate);
-            }
-            animate();
-        }
-
-        function switchMode(mode) {
-            currentMode = mode;
-            
-            // Reset UI Tabs
-            document.querySelectorAll('.mode-tab').forEach(tab => {
-                tab.className = 'mode-tab flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-zinc-400 hover:text-white hover:bg-grok-hover';
-            });
-
-            const badge = document.getElementById('activeModeBadge');
-            const thinkingBadge = document.getElementById('thinkingBadge');
-            thinkingBadge.classList.add('hidden');
-
-            if (mode === 'standard') {
-                document.getElementById('modeGrokStandard').className = 'mode-tab flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-grok-hover text-white shadow-sm';
-                badge.innerHTML = `<i data-lucide="zap" class="w-3 h-3 text-grok-cyan"></i> Grok 3 Ultra`;
-            } else if (mode === 'thinking') {
-                document.getElementById('modeGrokThinking').className = 'mode-tab flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-grok-hover text-white shadow-sm';
-                badge.innerHTML = `<i data-lucide="brain-circuit" class="w-3 h-3 text-purple-400"></i> Grok 3 Thinking`;
-                thinkingBadge.classList.remove('hidden');
-            } else if (mode === 'deepsearch') {
-                document.getElementById('modeGrokDeepSearch').className = 'mode-tab flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-grok-hover text-white shadow-sm';
-                badge.innerHTML = `<i data-lucide="globe" class="w-3 h-3 text-emerald-400"></i> Grok DeepSearch`;
-            } else if (mode === 'fun') {
-                document.getElementById('modeGrokFun').className = 'mode-tab flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-grok-hover text-white shadow-sm';
-                badge.innerHTML = `<i data-lucide="sparkles" class="w-3 h-3 text-pink-400"></i> Unhinged Mode`;
-            }
-            lucide.createIcons();
-        }
-
-        async function sendMessage() {
-            const inputEl = document.getElementById('userInput');
-            const text = inputEl.value.trim();
-            if (!text || isGenerating) return;
-
-            // Clear input
-            inputEl.value = '';
-            updateCharCounter();
-
-            // Hide Hero state if active
-            const heroState = document.getElementById('heroState');
-            if (heroState) heroState.classList.add('hidden');
-
-            // Initialize thread if needed
-            if (!currentChatId) {
-                currentChatId = Date.now().toString();
-                conversations.unshift({
-                    id: currentChatId,
-                    title: text.substring(0, 30) + (text.length > 30 ? '...' : ''),
-                    messages: []
-                });
-            }
-
-            const currentChat = conversations.find(c => c.id === currentChatId);
-
-            // Append User Message
-            const userMsg = { role: 'user', content: text, timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) };
-            currentChat.messages.push(userMsg);
-            renderMessage(userMsg);
-
-            // Prepare Assistant Message Placeholder
-            const assistantMsg = { role: 'assistant', content: '', thinking: '', sources: [], timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) };
-            currentChat.messages.push(assistantMsg);
-            const msgContainer = renderMessage(assistantMsg, true);
-
-            isGenerating = true;
-            document.getElementById('sendBtn').disabled = true;
-
-            try {
-                if (isImageGenMode || text.toLowerCase().startsWith('generate image') || text.toLowerCase().startsWith('draw')) {
-                    await handleImageGeneration(text, msgContainer);
-                } else {
-                    await handleTextGeneration(text, currentChat, msgContainer);
-                }
-            } catch (err) {
-                console.error("API Error:", err);
-                updateAssistantBubble(msgContainer, "⚠️ *An error occurred while connecting to Grok Ultra engine.* Please check connection and try again.");
-            } finally {
-                isGenerating = false;
-                document.getElementById('sendBtn').disabled = false;
-                saveConversations();
-                renderHistoryList();
-            }
-        }
-
-        async function handleTextGeneration(prompt, chat, msgContainer) {
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_TEXT_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
-
-            // Build System Instructions
-            let sysInstruction = document.getElementById('sysPromptInput').value || "You are Grok 3, a highly intelligent, witty, futuristic AI developed by xAI. Provide extremely comprehensive, accurate, and structured answers.";
-            
-            if (currentMode === 'fun') {
-                sysInstruction += " Adopt an unhinged, rebellious, edgy, humorous persona with witty sarcasm, but remain deeply informative.";
-            } else if (currentMode === 'thinking') {
-                sysInstruction += " Explicitly wrap your internal step-by-step reasoning logic inside <thinking>...</thinking> tags before giving the final answer.";
-            }
-
-            // Build Payload
-            const payload = {
-                contents: chat.messages.slice(0, -1).map(m => ({
-                    role: m.role === 'user' ? 'user' : 'model',
-                    parts: [{ text: m.content || prompt }]
-                })),
-                systemInstruction: { parts: [{ text: sysInstruction }] }
-            };
-
-            // Enable Search Grounding for DeepSearch
-            if (currentMode === 'deepsearch') {
-                payload.tools = [{ "google_search": {} }];
-            }
-
-            // Temperature Config
-            payload.generationConfig = {
-                temperature: parseFloat(document.getElementById('tempSlider').value || "0.7")
-            };
-
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            const data = await response.json();
-            const candidate = data.candidates?.[0];
-            const rawText = candidate?.content?.parts?.[0]?.text || "No response received.";
-
-            // Extract Grounding Sources if present
-            let sources = [];
-            const attributions = candidate?.groundingMetadata?.groundingAttributions;
-            if (attributions) {
-                sources = attributions.map(a => ({ title: a.web?.title || "Web Source", url: a.web?.uri })).filter(s => s.url);
-            }
-
-            // Process Thinking Tags if present
-            let finalContent = rawText;
-            let thinkingContent = '';
-
-            if (rawText.includes('<thinking>')) {
-                const parts = rawText.split('</thinking>');
-                thinkingContent = parts[0].replace('<thinking>', '').trim();
-                finalContent = parts[1] ? parts[1].trim() : '';
-            }
-
-            // Update state
-            const assistantMsg = chat.messages[chat.messages.length - 1];
-            assistantMsg.content = finalContent;
-            assistantMsg.thinking = thinkingContent;
-            assistantMsg.sources = sources;
-
-            updateAssistantBubble(msgContainer, finalContent, thinkingContent, sources);
-
-            // Auto-detect Code Blocks for Artifact Panel
-            detectAndLoadArtifact(finalContent);
-        }
-
-        async function handleImageGeneration(prompt, msgContainer) {
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_IMAGE_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
-            
-            const payload = {
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: {
-                    responseModalities: ['IMAGE']
-                }
-            };
-
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            const data = await response.json();
-            const base64Data = data?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
-
-            if (base64Data) {
-                const imgHtml = `Here is your generated visualization:\n\n![Generated Image](data:image/png;base64,${base64Data})`;
-                updateAssistantBubble(msgContainer, imgHtml);
-            } else {
-                updateAssistantBubble(msgContainer, "Unable to render image. Please refine your image prompt.");
-            }
-        }
-
-        function renderMessage(msg, isLoading = false) {
-            const container = document.getElementById('chatMessages');
-            const wrapper = document.createElement('div');
-            wrapper.className = `flex gap-3 sm:gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`;
-
-            if (msg.role === 'user') {
-                wrapper.innerHTML = `
-                    <div class="max-w-[85%] sm:max-w-[75%] bg-zinc-800 text-zinc-100 rounded-2xl rounded-tr-none px-4 py-3 shadow-md border border-zinc-700/50">
-                        <p class="text-sm leading-relaxed font-sans">${escapeHtml(msg.content)}</p>
-                        <span class="text-[10px] text-zinc-400 mt-1 block text-right font-mono">${msg.timestamp}</span>
-                    </div>
-                `;
-            } else {
-                wrapper.innerHTML = `
-                    <div class="w-8 h-8 rounded-xl bg-black border border-grok-cyan/40 flex items-center justify-center shrink-0 mt-1 shadow-lg">
-                        <i data-lucide="bot" class="w-4 h-4 text-grok-cyan"></i>
-                    </div>
-                    <div class="max-w-[85%] sm:max-w-[80%] space-y-2">
-                        <div class="bg-grok-card border border-grok-border rounded-2xl rounded-tl-none p-4 shadow-xl glass-card text-zinc-200">
-                            ${isLoading ? `
-                                <div class="flex items-center gap-3 text-grok-cyan font-mono text-xs animate-pulse py-2">
-                                    <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
-                                    <span>GROK ULTRA PROCESSING...</span>
-                                </div>
-                            ` : ''}
-                            <div class="msg-content markdown-content text-sm"></div>
-                        </div>
-                    </div>
-                `;
-            }
-
-            container.appendChild(wrapper);
-            container.scrollTop = container.scrollHeight;
-            lucide.createIcons();
-            return wrapper;
-        }
-
-        function updateAssistantBubble(wrapper, content, thinking = '', sources = []) {
-            const msgCard = wrapper.querySelector('.bg-grok-card');
-            
-            let html = '';
-
-            // Render Thinking Steps if available
-            if (thinking) {
-                html += `
-                    <details class="mb-3 border border-purple-500/30 bg-purple-950/20 rounded-xl overflow-hidden group">
-                        <summary class="px-3 py-2 text-xs font-mono text-purple-300 flex items-center justify-between cursor-pointer hover:bg-purple-900/20">
-                            <span class="flex items-center gap-2">
-                                <i data-lucide="brain" class="w-3.5 h-3.5 text-purple-400"></i> Thought Process (${thinking.length} chars)
-                            </span>
-                            <i data-lucide="chevron-down" class="w-3.5 h-3.5 group-open:rotate-180 transition-transform"></i>
-                        </summary>
-                        <div class="p-3 text-xs text-purple-200/80 font-mono bg-black/40 border-t border-purple-500/20 whitespace-pre-wrap">${escapeHtml(thinking)}</div>
-                    </details>
-                `;
-            }
-
-            // Render Sources if available (DeepSearch)
-            if (sources && sources.length > 0) {
-                html += `
-                    <div class="mb-3 flex flex-wrap gap-1.5 border-b border-grok-border pb-2.5">
-                        <span class="text-[11px] font-mono text-emerald-400 flex items-center gap-1 w-full mb-1">
-                            <i data-lucide="check-circle-2" class="w-3 h-3"></i> Verified Web Grounding (${sources.length} sources):
-                        </span>
-                        ${sources.map(s => `
-                            <a href="${s.url}" target="_blank" class="text-[10px] bg-emerald-950/40 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-md hover:bg-emerald-900/50 truncate max-w-[200px]">
-                                🌐 ${escapeHtml(s.title)}
-                            </a>
-                        `).join('')}
-                    </div>
-                `;
-            }
-
-            // Render Markdown
-            html += marked.parse(content);
-
-            // Render Action Buttons (Copy, TTS)
-            html += `
-                <div class="flex items-center justify-between border-t border-zinc-800/80 pt-2.5 mt-3 text-xs text-zinc-400">
-                    <div class="flex items-center gap-2">
-                        <button onclick="copyToClipboard(\`${escapeForAttribute(content)}\`)" class="hover:text-grok-cyan flex items-center gap-1 text-[11px] transition-all">
-                            <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy
-                        </button>
-                        <button onclick="speakText(\`${escapeForAttribute(content)}\`)" class="hover:text-purple-400 flex items-center gap-1 text-[11px] transition-all">
-                            <i data-lucide="volume-2" class="w-3.5 h-3.5"></i> Listen
-                        </button>
-                    </div>
-                    <span class="font-mono text-[10px] text-zinc-500">xAI Grok Engine</span>
-                </div>
-            `;
-
-            msgCard.innerHTML = html;
-            
-            // Highlight Code Blocks
-            msgCard.querySelectorAll('pre code').forEach((block) => {
-                hljs.highlightElement(block);
-            });
-
-            lucide.createIcons();
-            const container = document.getElementById('chatMessages');
-            container.scrollTop = container.scrollHeight;
-        }
-
-        function detectAndLoadArtifact(text) {
-            const codeBlockRegex = /```(html|javascript|js|css)\n([\s\S]*?)```/i;
-            const match = text.match(codeBlockRegex);
-
-            if (match) {
-                const lang = match[1].toLowerCase();
-                let code = match[2];
-
-                if (lang === 'html' || code.includes('<!DOCTYPE html>') || code.includes('<html')) {
-                    artifactContent = code;
-                    openArtifactPanel(code);
-                }
-            }
-        }
-
-        function openArtifactPanel(code) {
-            const panel = document.getElementById('artifactPanel');
-            panel.classList.remove('hidden', 'translate-x-full');
-            
-            document.getElementById('artifactCodeText').innerText = code;
-            hljs.highlightElement(document.getElementById('artifactCodeText'));
-
-            setArtifactTab('preview');
-        }
-
-        function toggleArtifactPanel() {
-            const panel = document.getElementById('artifactPanel');
-            if (panel.classList.contains('hidden')) {
-                panel.classList.remove('hidden', 'translate-x-full');
-            } else {
-                panel.classList.add('hidden', 'translate-x-full');
-            }
-        }
-
-        function setArtifactTab(tab) {
-            const iframe = document.getElementById('artifactIframe');
-            const codeView = document.getElementById('artifactCodeView');
-            const tabPreview = document.getElementById('artifactTabPreview');
-            const tabCode = document.getElementById('artifactTabCode');
-
-            if (tab === 'preview') {
-                iframe.classList.remove('hidden');
-                codeView.classList.add('hidden');
-                tabPreview.className = 'px-2.5 py-1 rounded text-xs font-medium bg-grok-hover text-white transition-all';
-                tabCode.className = 'px-2.5 py-1 rounded text-xs font-medium text-zinc-400 hover:text-white transition-all';
-                
-                // Write code into iframe
-                const doc = iframe.contentWindow.document;
-                doc.open();
-                doc.write(artifactContent || '<h3 style="color:#888;font-family:sans-serif;text-align:center;margin-top:20%;">No HTML artifact loaded</h3>');
-                doc.close();
-            } else {
-                iframe.classList.add('hidden');
-                codeView.classList.remove('hidden');
-                tabCode.className = 'px-2.5 py-1 rounded text-xs font-medium bg-grok-hover text-white transition-all';
-                tabPreview.className = 'px-2.5 py-1 rounded text-xs font-medium text-zinc-400 hover:text-white transition-all';
-            }
-        }
-
-        function copyArtifactCode() {
-            if (artifactContent) {
-                copyToClipboard(artifactContent);
-            }
-        }
-
-        async function speakText(text) {
-            const cleanText = text.replace(/[*#`_]/g, '').substring(0, 300);
-            const voiceName = document.getElementById('voiceSelect').value || 'Zephyr';
-
-            try {
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_TTS_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
-                const payload = {
-                    contents: [{ parts: [{ text: `Say clearly: ${cleanText}` }] }],
-                    generationConfig: {
-                        responseModalities: ["AUDIO"],
-                        speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voiceName } } }
-                    }
-                };
-
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                const result = await response.json();
-                const part = result?.candidates?.[0]?.content?.parts?.[0];
-                const base64Audio = part?.inlineData?.data;
-
-                if (base64Audio) {
-                    const audio = new Audio(`data:audio/wav;base64,${base64Audio}`);
-                    audio.play();
-                } else {
-                    // Fallback to Web Speech API
-                    const synth = window.speechSynthesis;
-                    const utterance = new SpeechSynthesisUtterance(cleanText);
-                    synth.speak(utterance);
-                }
-            } catch (e) {
-                // Fallback Speech Synthesis
-                const synth = window.speechSynthesis;
-                const utterance = new SpeechSynthesisUtterance(cleanText);
-                synth.speak(utterance);
-            }
-        }
-
-        function setupVoiceRecognition() {
-            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                recognition = new SpeechRecognition();
-                recognition.continuous = false;
-                recognition.interimResults = false;
-                recognition.lang = 'es-ES';
-
-                recognition.onresult = (event) => {
-                    const transcript = event.results[0][0].transcript;
-                    const input = document.getElementById('userInput');
-                    input.value += (input.value ? ' ' : '') + transcript;
-                    updateCharCounter();
-                    toggleVoiceInput();
-                };
-
-                recognition.onerror = () => toggleVoiceInput();
-                recognition.onend = () => {
-                    isRecording = false;
-                    document.getElementById('micBtn').classList.remove('text-red-500', 'animate-pulse');
-                };
-            }
-        }
-
-        function toggleVoiceInput() {
-            if (!recognition) {
-                alert("Speech recognition is not supported in this browser.");
-                return;
-            }
-
-            const micBtn = document.getElementById('micBtn');
-            if (isRecording) {
-                recognition.stop();
-                isRecording = false;
-                micBtn.classList.remove('text-red-500', 'animate-pulse');
-            } else {
-                recognition.start();
-                isRecording = true;
-                micBtn.classList.add('text-red-500', 'animate-pulse');
-            }
-        }
-
-        function renderHistoryList() {
-            const listContainer = document.getElementById('historyList');
-            listContainer.innerHTML = '';
-
-            conversations.forEach(chat => {
-                const item = document.createElement('div');
-                item.className = `group flex items-center justify-between p-2 rounded-lg cursor-pointer text-xs transition-all ${chat.id === currentChatId ? 'bg-grok-hover text-white font-medium border border-grok-border' : 'text-zinc-400 hover:bg-black/40 hover:text-zinc-200'}`;
-                item.onclick = () => loadChat(chat.id);
-
-                item.innerHTML = `
-                    <div class="flex items-center gap-2 truncate">
-                        <i data-lucide="message-square" class="w-3.5 h-3.5 shrink-0 ${chat.id === currentChatId ? 'text-grok-cyan' : 'text-zinc-500'}"></i>
-                        <span class="truncate">${escapeHtml(chat.title)}</span>
-                    </div>
-                    <button onclick="deleteChat(event, '${chat.id}')" class="opacity-0 group-hover:opacity-100 p-1 hover:text-red-400 transition-opacity">
-                        <i data-lucide="trash" class="w-3 h-3"></i>
-                    </button>
-                `;
-                listContainer.appendChild(item);
-            });
-            lucide.createIcons();
-        }
-
-        function loadChat(id) {
-            currentChatId = id;
-            const chat = conversations.find(c => c.id === id);
-            if (!chat) return;
-
-            document.getElementById('heroState').classList.add('hidden');
-            const container = document.getElementById('chatMessages');
-            container.innerHTML = '';
-
-            chat.messages.forEach(msg => {
-                if (msg.role === 'user') {
-                    renderMessage(msg);
-                } else {
-                    const bubble = renderMessage(msg);
-                    updateAssistantBubble(bubble, msg.content, msg.thinking, msg.sources);
-                }
-            });
-
-            renderHistoryList();
-        }
-
-        function resetToNewChat() {
-            currentChatId = null;
-            document.getElementById('chatMessages').innerHTML = `
-                <div id="heroState" class="h-full flex flex-col items-center justify-center text-center px-4 py-12 my-auto">
-                    <div class="relative w-28 h-28 mb-6 flex items-center justify-center">
-                        <div class="absolute inset-0 rounded-full bg-gradient-to-r from-grok-cyan to-grok-purple blur-xl opacity-40 animate-pulse-glow"></div>
-                        <div class="relative w-20 h-20 rounded-2xl bg-black border border-grok-cyan/50 flex items-center justify-center shadow-2xl animate-orb-float">
-                            <i data-lucide="bot" class="w-10 h-10 text-grok-cyan"></i>
-                        </div>
-                    </div>
-                    <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-2 font-mono">WHAT DO YOU WANT TO KNOW?</h1>
-                    <p class="text-zinc-400 text-sm max-w-md mb-8">Powered by Grok 3 Ultra architecture. Real-time web analysis, deep reasoning, and high-speed code generation.</p>
-                </div>
-            `;
-            renderHistoryList();
-            document.getElementById('userInput').focus();
-        }
-
-        function deleteChat(e, id) {
-            e.stopPropagation();
-            conversations = conversations.filter(c => c.id !== id);
-            saveConversations();
-            if (currentChatId === id) resetToNewChat();
-            renderHistoryList();
-        }
-
-        function clearAllHistory() {
-            conversations = [];
-            saveConversations();
-            resetToNewChat();
-        }
-
-        function saveConversations() {
-            localStorage.setItem('grok_chats', JSON.stringify(conversations));
-        }
-
-        function usePrompt(text) {
-            document.getElementById('userInput').value = text;
-            updateCharCounter();
-            sendMessage();
-        }
-
-        function handleKeyDown(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        }
-
-        function updateCharCounter() {
-            const input = document.getElementById('userInput');
-            document.getElementById('charCounter').innerText = `${input.value.length} / 4000`;
-        }
-
-        function toggleImageGenMode() {
-            isImageGenMode = !isImageGenMode;
-            const btn = document.getElementById('imgGenToggle');
-            if (isImageGenMode) {
-                btn.classList.add('bg-purple-500/20', 'text-purple-400', 'border', 'border-purple-500/30');
-            } else {
-                btn.classList.remove('bg-purple-500/20', 'text-purple-400', 'border', 'border-purple-500/30');
-            }
-        }
-
-        function triggerFileInput() {
-            document.getElementById('fileInput').click();
-        }
-
-        function handleFileUpload(e) {
-            const file = e.target.files[0];
-            if (file) {
-                document.getElementById('userInput').value += ` [Attached File: ${file.name}]`;
-                updateCharCounter();
-            }
-        }
-
-        function openSettingsModal() {
-            const modal = document.getElementById('settingsModal');
-            modal.classList.remove('opacity-0', 'pointer-events-none');
-        }
-
-        function closeSettingsModal() {
-            const modal = document.getElementById('settingsModal');
-            modal.classList.add('opacity-0', 'pointer-events-none');
-        }
-
-        function copyToClipboard(text) {
-            const textarea = document.createElement('textarea');
-            textarea.value = text;
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textarea);
-
-            confetti({ particleCount: 30, spread: 50, origin: { y: 0.9 } });
-        }
-
-        function escapeHtml(str) {
-            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-        }
-
-        function escapeForAttribute(str) {
-            return str.replace(/`/g, '\\`').replace(/"/g, '&quot;').replace(/'/g, "\\'");
-        }
-
-        // Sidebar drawer toggle on mobile
-        document.getElementById('toggleSidebarBtn').addEventListener('click', () => {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('-translate-x-full');
-        });
-    </script>
+    <div class="notice">Este proyecto no llama a OpenAI, Gemini, Claude ni a ningún servidor externo. El aprendizaje, los pesos y la memoria viven localmente. Un modelo de millones de parámetros necesita datos de entrenamiento reales para adquirir conocimiento; por eso QyrexAI combina un núcleo neuronal local con un motor generativo/reglas que se puede seguir entrenando.</div>
+    <div><div style="display:flex;justify-content:space-between;font-size:10px;color:#9097a8;margin-bottom:6px"><span>Entrenamiento local</span><span id="trainLabel">0 ejemplos</span></div><div class="progress"><i id="trainProgress"></i></div></div>
+    <div class="control-row">
+      <button onclick="trainStarter()">Entrenar dataset local</button>
+      <button onclick="clearLearning()">Borrar aprendizaje</button>
+      <button onclick="downloadWeights()">Descargar pesos</button>
+    </div>
+    <div id="trainStatus" class="notice">Listo.</div>
+  </div>
+ </div>
+</div>
+
+<script src="./qyrex-model.js"></script>
+<script src="./qyrex-engine.js"></script>
+<script>
+const app = new QyrexApp();
+window.addEventListener('DOMContentLoaded',()=>app.init());
+function send(){app.send()}
+function quick(t){document.getElementById('prompt').value=t;app.send()}
+function newChat(){app.newChat()}
+function openModel(){app.openModel()}
+function closeModel(){app.closeModel()}
+function trainStarter(){app.trainStarter()}
+function clearLearning(){app.clearLearning()}
+function exportModel(){app.exportModel()}
+function importModel(e){app.importModel(e)}
+function downloadWeights(){app.downloadWeights()}
+</script>
 </body>
 </html>
