@@ -1,49 +1,37 @@
-# QyrexAI Real — Render
+# QyrexAI Ultra
 
-Asistente conversacional con LLM generativo local en tu propio servidor Node. La interfaz muestra la respuesta mientras el modelo la genera, en lugar de esperar a que termine toda la inferencia.
+Asistente generativo local para Render/Node.js, sin proveedor de inferencia de IA externo.
 
-## Qué usa
-- Node.js + `server.js`
-- Transformers.js
-- `onnx-community/Qwen2.5-0.5B-Instruct` por defecto
-- `TextStreamer` para streaming token a token
-- Memoria/contexto en el navegador mediante `localStorage`
-- Sin OpenAI/Gemini/Claude ni API de inferencia externa
+## Motor
 
-El modelo ONNX de Qwen3 está publicado para Transformers.js y soporta `TextStreamer`; la variante `q4f16` está cuantizada para reducir memoria. Consulta el modelo configurado en `QYREX_MODEL` si quieres cambiarlo.
+El motor principal usa `opalitestudios/Qwen2.5-3B-Instruct-ONNX` con cuantización `q4f16`. Si ese modelo no puede cargarse, el servidor baja automáticamente a Qwen3 1.7B, Qwen2.5 1.5B y finalmente 0.5B.
+
+El modelo principal tiene ~3B parámetros, por lo que supera ampliamente el aumento de 500M solicitado respecto al modelo anterior de 1.5B.
 
 ## Render
-Build Command:
-```text
-npm install
-```
-Start Command:
-```text
-node server.js
-```
 
-Health check:
-```text
-/health
-```
+- Build Command: `npm install`
+- Start Command: `node server.js`
+- Health Check: `/health`
 
 ## Variables opcionales
-```text
-QYREX_MODEL=onnx-community/Qwen2.5-0.5B-Instruct
-QYREX_DTYPE=q4f16
-QYREX_MAX_NEW_TOKENS=768
-QYREX_MAX_HISTORY=12
-QYREX_MODEL_CACHE=./.qcache
-```
 
-## Flujo
-1. Render inicia `server.js`.
-2. La web consulta `/api/status` y comienza el precalentamiento en `/api/warmup`.
-3. Al enviar un mensaje, el navegador abre `/api/chat-stream`.
-4. El servidor usa `TextStreamer` y envía eventos SSE conforme genera tokens.
-5. La interfaz pinta el texto inmediatamente y guarda el turno en memoria local.
+- `QYREX_MODELS` para personalizar el orden de modelos.
+- `QYREX_DTYPES` para personalizar cuantización; normalmente `q4f16,q4`.
+- `QYREX_MAX_NEW_TOKENS` para limitar salida.
+- `QYREX_MAX_HISTORY` para el contexto conversacional.
+- `QYREX_MODEL_CACHE` para el directorio de cache.
 
-La primera carga es más lenta porque el modelo debe descargarse y entrar en caché. Las siguientes peticiones reutilizan el modelo mientras el proceso de Render siga vivo.
+## Endpoints
 
+- `GET /health`
+- `GET /api/status`
+- `POST /api/warmup`
+- `POST /api/chat`
+- `POST /api/chat-stream`
 
-El servidor prueba automáticamente `onnx-community/Qwen2.5-0.5B-Instruct` y `onnx-community/Qwen3-0.6B-ONNX`, primero con `q4f16` y después con `q4`. Puedes cambiarlo con `QYREX_MODELS` y `QYREX_DTYPES`.
+## Importante
+
+El primer arranque puede ser lento porque Render debe descargar los pesos del modelo. La app muestra el estado de carga y después transmite la respuesta progresivamente.
+
+El rendimiento real depende de CPU, RAM y almacenamiento del plan de Render. Un modelo de 3B requiere bastante más memoria que uno de 0.5B/1.5B.

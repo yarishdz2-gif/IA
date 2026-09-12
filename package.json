@@ -1,8 +1,8 @@
 {
   "name": "qyrexai-local",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "private": true,
-  "description": "QyrexAI local neural web app, no external AI APIs",
+  "description": "QyrexAI Ultra - local generative assistant with pretrained ONNX models and Render server",
   "scripts": {
     "start": "node server.js"
   },

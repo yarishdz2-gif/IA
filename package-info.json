@@ -1,9 +1,20 @@
 {
-  "name":"QyrexAI Real",
-  "version":"3.0.0",
-  "mode":"Render Node Web Service",
-  "inference":"local Node + Transformers.js + quantized Qwen3",
-  "externalInferenceApi":false,
-  "fallback":"local neural/rule engine",
-  "model":"onnx-community/Qwen3-0.6B-DQ-ONNX"
+  "version": "3.0.0",
+  "name": "QyrexAI Ultra",
+  "server": "server.js",
+  "primaryModel": "opalitestudios/Qwen2.5-3B-Instruct-ONNX",
+  "primaryParameters": 3000000000,
+  "fallbackModels": [
+    "onnx-community/Qwen3-1.7B-ONNX",
+    "onnx-community/Qwen2.5-1.5B-Instruct",
+    "onnx-community/Qwen2.5-0.5B-Instruct"
+  ],
+  "features": [
+    "streaming SSE",
+    "conversation context",
+    "anti-repeat response guard",
+    "automatic model fallback",
+    "Render health endpoint",
+    "local pretrained ONNX inference"
+  ]
 }
