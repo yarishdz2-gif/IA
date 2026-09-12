@@ -1,63 +1,37 @@
-# QyrexAI Pro Max 7.0 — Absorbed Open Models
+# QyrexAI Pro Max 7.0
 
-QyrexAI Pro Max ejecuta un **LLM open-weight real** (por defecto Qwen2.5-14B Instruct GGUF Q4_K_M) **100% local** dentro del proceso Node mediante `node-llama-cpp`.
+Versión centrada en que el modelo **sí genere texto** de forma fiable y rápida dentro de Render.
 
-No llama a OpenAI, Gemini, Claude ni Grok para generar texto. Todo corre en tu máquina / servidor.
+## Motor
 
-## Qué se absorbió de los mejores modelos open-source (2025-2026)
+Primario: `bartowski/Qwen_Qwen3-4B-Instruct-2507-GGUF:Q4_K_M` (~4B parámetros). Qwen3-4B-Instruct-2507 en Q4_K_M es una opción local relativamente compacta; el repositorio cuantizado publica un archivo de ~2.50 GB y recomienda Q4_K_M como opción equilibrada. citehttps://huggingface.co/bartowski/Qwen_Qwen3-4B-Instruct-2507-GGUF
 
-- **Qwen3.x / Qwen3.8 27B** y familia Qwen2.5 → excelente instrucción, coding, multilingüe y razonamiento.
-- **DeepSeek-R1 / V3 distillados** → patrones de razonamiento fuerte y math.
-- **Llama 4 / Gemma 4 / GLM-5** → buenas prácticas de system prompt, honestidad sobre límites y utilidad directa.
+Fallbacks automáticos:
+1. Qwen3-4B-Instruct-2507
+2. Qwen2.5-3B-Instruct
+3. Qwen2.5-1.5B-Instruct
+4. Qwen2.5-0.5B-Instruct
 
-El system prompt está diseñado para que QyrexAI se comporte como un asistente de alto nivel: resuelve, no solo describe; da código completo; calcula con cuidado; habla natural en español/inglés.
+## Correcciones clave
 
-## Modelos recomendados (cambia con env)
+- Se usa `model.createContext()` sin forzar una estructura de `contextSize` incompatible.
+- `LlamaChatSession` recibe el contexto mediante `contextSequence`.
+- El system prompt se inserta como `ChatHistoryItem` tipo `system`.
+- El historial de modelo usa `{type:'model', response:[...]}`.
+- Se usa `onTextChunk` para streaming.
+- Si un modelo no carga, se prueba el siguiente.
+- `/api/test` ejecuta una generación mínima real y permite comprobar el modelo antes de usar el chat.
 
-```bash
-# Por defecto (buen balance calidad/memoria)
-export QYREX_MODEL_URI="hf:Qwen/Qwen2.5-14B-Instruct-GGUF:Q4_K_M"
+La documentación actual de `node-llama-cpp` muestra `LlamaChatSession` con `model.createContext()` y `context.getSequence()`, además de `onTextChunk` para streaming. citehttps://node-llama-cpp.withcat.ai/guide/chat-session
 
-# Más potente (necesita más RAM/VRAM)
-export QYREX_MODEL_URI="hf:Qwen/Qwen2.5-32B-Instruct-GGUF:Q4_K_M"
-# o (si está disponible en HF)
-export QYREX_MODEL_URI="hf:unsloth/Qwen3.8-27B-GGUF:Q4_K_M"
+## Render
 
-# Más ligero
-export QYREX_MODEL_URI="hf:Qwen/Qwen2.5-7B-Instruct-GGUF:Q4_K_M"
-```
+Build: `npm install`
 
-El modelo se descarga y cachea automáticamente en `data/models/` la primera vez.
+Start: `node server.js`
 
-## Arranque
+Health: `/health`
 
-```bash
-npm install
-node server.js
-```
+Diagnóstico del LLM: `/api/test`
 
-- Health: `/health` o `/api/status`
-- Chat stream: `POST /api/chat-stream`
-- Conversaciones, archivos e imágenes persistentes en disco
-
-## Render / producción
-
-Build: `npm install`  
-Start: `node server.js`  
-
-Usa el disco persistente de `render.yaml` para que chats, archivos y el caché del modelo sobrevivan a redeploys.
-
-## Límites honestos
-
-- Es un modelo open-weight real (14B+), no un motor de reglas.
-- La calidad depende del modelo elegido, la cuantización, el hardware y el contexto.
-- No supera automáticamente a los modelos de frontera propietarios de 2026, pero es de lo mejor que puedes correr 100% local sin APIs de terceros.
-- Para “más de 20.000 parámetros”: los modelos reales tienen **miles de millones**. El número de parámetros del modelo activo se reporta en `/api/status`.
-
-## Estructura
-
-- `llm.js` — carga del modelo + system prompt absorbido
-- `server.js` — API HTTP + streaming
-- `store.js` — persistencia de chats, archivos y perfiles de modelos
-- `public/index.html` — UI
-- `model-config.json` — metadatos
+El disco persistente se monta en `/opt/render/project/src/data` para chats, archivos e imágenes.

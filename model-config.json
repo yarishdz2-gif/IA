@@ -1,22 +1,18 @@
 {
-  "name": "QyrexAI Pro Max 7.0 — Absorbed Open Models",
-  "primary": "Qwen/Qwen2.5-14B-Instruct-GGUF (default) or stronger via env",
+  "name": "QyrexAI Pro Max 7.0",
+  "primary": "bartowski/Qwen_Qwen3-4B-Instruct-2507-GGUF",
   "quantization": "Q4_K_M",
-  "parameters": 14000000000,
-  "runtime": "node-llama-cpp",
-  "inference": "100% local process — no OpenAI / Gemini / Claude / Grok API for generation",
-  "context": 16384,
-  "max_new_tokens": 2048,
-  "recommended_alternatives": [
-    "hf:Qwen/Qwen2.5-32B-Instruct-GGUF:Q4_K_M  (~32B, needs ~20GB+)",
-    "hf:unsloth/Qwen3.8-27B-GGUF:Q4_K_M       (strong 2026 27B)",
-    "hf:Qwen/Qwen2.5-7B-Instruct-GGUF:Q4_K_M  (lighter fallback)"
-  ],
+  "parameters": 4000000000,
+  "runtime": "node-llama-cpp 3.20.0",
+  "inference": "local server process, no hosted inference API",
+  "selection": "Qwen3-4B primary, then Qwen2.5 3B/1.5B/0.5B fallbacks",
+  "context": 8192,
+  "max_new_tokens": 900,
   "persistent": {
     "conversations": true,
     "files": true,
     "images": true,
     "model_profiles": true
   },
-  "notes": "Set QYREX_MODEL_URI to any compatible GGUF on Hugging Face. The system prompt absorbs instruction-following, coding and reasoning patterns from leading open-weight models (Qwen3.x, DeepSeek-R1 family, Llama 4, GLM, Gemma 4)."
+  "diagnostics": "/api/status and /api/test"
 }

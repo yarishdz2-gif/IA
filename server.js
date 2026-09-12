@@ -26,6 +26,7 @@ const server=http.createServer(async(req,res)=>{
     if(req.method==='OPTIONS'){res.writeHead(204,{'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'Content-Type','Access-Control-Allow-Methods':'GET,POST,DELETE,OPTIONS'});return res.end();}
     if(u.pathname==='/health')return json(res,200,{ok:true,service:'QyrexAI Pro Max',model:llmStatus(),persistentData:true,storage:'disk'});
     if(u.pathname==='/api/status'&&req.method==='GET')return json(res,200,{ok:true,llm:llmStatus()});
+    if(u.pathname==='/api/test'&&req.method==='GET'){try{const t=await warmup();return json(res,200,{ok:true,test:'model-generated',text:t,llm:llmStatus()});}catch(e){return json(res,503,{ok:false,test:'failed',error:String(e.message||e),llm:llmStatus()});}}
     if(u.pathname==='/api/models'&&req.method==='GET')return json(res,200,{ok:true,models:await listModels(),llm:llmStatus()});
     if(u.pathname==='/api/models'&&req.method==='POST'){const b=await body(req);return json(res,200,{ok:true,models:await saveModelProfile(b)});}
     if(u.pathname==='/api/warmup'&&req.method==='POST'){try{await warmup();return json(res,200,{ok:true,llm:llmStatus()})}catch(e){return json(res,503,{ok:false,error:String(e.message||e),llm:llmStatus()})}}

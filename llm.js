@@ -1,54 +1,44 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
+import os from 'node:os';
 import { getLlama, resolveModelFile, LlamaChatSession } from 'node-llama-cpp';
 
-const ROOT = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.dirname(new URL(import.meta.url).pathname);
+const MODELS_DIR = path.join(ROOT, 'models');
 const DATA_DIR = path.join(ROOT, 'data');
-const MODELS_DIR = path.join(DATA_DIR, 'models');
 
-// Default: strong open model. Override with QYREX_MODEL_URI
-// Recommended strong locals (2026): Qwen3.x 27B, Qwen2.5-32B, Gemma-4, etc.
-const MODEL_URI = process.env.QYREX_MODEL_URI || 'hf:Qwen/Qwen2.5-14B-Instruct-GGUF:Q4_K_M';
-const MAX_TOKENS = Math.max(64, Number(process.env.QYREX_MAX_TOKENS || 2048));
-const CONTEXT_MAX = Math.max(2048, Number(process.env.QYREX_CONTEXT_MAX || 16384));
-const CONTEXT_MIN = Math.max(1024, Number(process.env.QYREX_CONTEXT_MIN || 4096));
+const FAST_MODEL = process.env.QYREX_MODEL_URI || 'hf:bartowski/Qwen_Qwen3-4B-Instruct-2507-GGUF:Q4_K_M';
+const FALLBACKS = [
+  FAST_MODEL,
+  'hf:Qwen/Qwen2.5-3B-Instruct-GGUF:Q4_K_M',
+  'hf:Qwen/Qwen2.5-1.5B-Instruct-GGUF:Q4_K_M',
+  'hf:Qwen/Qwen2.5-0.5B-Instruct-GGUF:Q4_K_M'
+].filter((v, i, a) => v && a.indexOf(v) === i);
 
-let llamaPromise = null;
-let modelPromise = null;
-let model = null;
-let modelPath = null;
-let modelInfo = null;
-let lastError = null;
-let loadedAt = null;
+const CONTEXT_SIZE = Math.max(2048, Number(process.env.QYREX_CONTEXT || 8192));
+const MAX_TOKENS = Math.max(128, Number(process.env.QYREX_MAX_TOKENS || 900));
 
-// Absorbed best practices from top open models (Qwen3/3.x, DeepSeek-R1 distill, Llama-4, GLM, Gemma-4):
-// - Strong instruction following & multilingual
-// - Explicit problem-solving over meta-talk
-// - Coding with complete, runnable solutions
-// - Careful math + reasoning summaries
-// - Honesty about knowledge cut-off / local limits
-const SYSTEM_PROMPT = `Eres QyrexAI Pro Max, un asistente de propósito general extremadamente capaz, preciso y útil. Funcionas 100% en local.
+let llamaPromise;
+let active = null;
+let loadingModel = null;
+const attempts = [];
 
-Principios (inspirados en los mejores modelos open-weight 2025-2026: Qwen3.x, DeepSeek-R1, Llama 4, GLM-5, Gemma 4):
-
-1. Resuelve el problema real del usuario. No describas lo que podrías hacer; hazlo.
-2. Habla de forma natural en el idioma del usuario (español, inglés, mixto, slang, con typos). Sé directo y claro.
-3. Para código: entrega soluciones completas, ejecutables y bien estructuradas. Explica la causa raíz de errores cuando se te den logs o síntomas.
-4. Para matemáticas y razonamiento: calcula con cuidado, muestra los pasos esenciales y llega a una conclusión clara.
-5. Para escritura: entrega texto pulido y listo para usar.
-6. Para comparaciones: explica trade-offs y da una recomendación concreta cuando sea posible.
-7. Usa el contexto de la conversación. No repitas respuestas idénticas.
-8. Sé honesto sobre límites: no inventes hechos actuales de internet, precios, ni resultados de herramientas que no tienes. Si no sabes algo verificable, dilo.
-9. Nunca rellenes con “estoy procesando”, “espera”, “déjame pensar” o disclaimers innecesarios.
-10. No reveles cadena de pensamiento privada. Resume el razonamiento de forma útil y concisa cuando aporte valor.
-11. Prioriza utilidad, precisión y acción. Sé la mejor versión local posible.
-
-Responde siempre como QyrexAI.`;
+const SYSTEM_PROMPT = `Eres QyrexAI, un asistente general de alta calidad.
+Responde de forma natural, útil y directa en el idioma del usuario.
+Entiende español, inglés, errores de escritura, slang y mensajes cortos.
+Mantén el contexto de la conversación y no repitas respuestas sin motivo.
+Cuando te pidan código, entrega código completo y ejecutable cuando corresponda.
+Cuando depures, encuentra primero la causa y después da una solución completa.
+Para matemáticas, calcula con cuidado y muestra el procedimiento esencial.
+No inventes datos, herramientas, búsquedas ni archivos que no hayas usado realmente.
+No digas frases de estado como "estoy procesando" o "espérame".
+No reveles cadenas privadas de razonamiento interno; da conclusiones y explicaciones útiles.
+Sé creativo cuando el usuario pida creatividad y preciso cuando pida exactitud.`;
 
 async function ensureDirs() {
   await fs.mkdir(MODELS_DIR, { recursive: true });
   await fs.mkdir(DATA_DIR, { recursive: true });
+  await fs.mkdir(path.join(DATA_DIR, 'files'), { recursive: true });
 }
 
 async function getLlamaInstance() {
@@ -56,108 +46,134 @@ async function getLlamaInstance() {
   return llamaPromise;
 }
 
-async function loadModel() {
-  if (model) return model;
-  if (modelPromise) return modelPromise;
-  modelPromise = (async () => {
-    await ensureDirs();
-    try {
-      const resolved = await resolveModelFile(MODEL_URI, MODELS_DIR, { cli: true });
-      modelPath = resolved;
-      const llama = await getLlamaInstance();
-      const loaded = await llama.loadModel({ modelPath: resolved });
-      model = loaded;
-      modelInfo = {
-        uri: MODEL_URI,
-        path: resolved,
-        // Approximate; real count depends on exact GGUF
-        parameters: MODEL_URI.includes('32B') || MODEL_URI.includes('27B') ? 27000000000 :
-                    MODEL_URI.includes('14B') ? 14000000000 :
-                    MODEL_URI.includes('7B') ? 7000000000 : 14000000000
-      };
-      loadedAt = new Date().toISOString();
-      lastError = null;
-      return model;
-    } catch (e) {
-      lastError = String(e.message || e);
-      modelPromise = null;
-      throw e;
-    }
-  })();
-  return modelPromise;
+function totalMemoryGB() {
+  return os.totalmem() / 1024 / 1024 / 1024;
 }
 
-export async function generate({ messages = [], onChunk = () => {} } = {}) {
-  const m = await loadModel();
+async function loadOne(uri) {
   const llama = await getLlamaInstance();
+  const modelPath = await resolveModelFile(uri, MODELS_DIR);
+  const loaded = await llama.loadModel({ modelPath });
+  return { loaded, modelPath, uri };
+}
 
-  // Build context size safely
-  let contextSize = CONTEXT_MAX;
-  try {
-    // node-llama-cpp may expose model details; keep conservative
-    contextSize = Math.min(CONTEXT_MAX, Math.max(CONTEXT_MIN, 8192));
-  } catch {}
+async function getModel() {
+  if (active) return active;
+  if (loadingModel) return loadingModel;
 
-  const context = await m.createContext({ contextSize });
+  loadingModel = (async () => {
+    await ensureDirs();
+    const maxCandidates = process.env.QYREX_ALLOW_ALL_MODELS === '1' ? FALLBACKS : FALLBACKS.slice(0, 4);
+    attempts.length = 0;
+
+    for (const uri of maxCandidates) {
+      try {
+        attempts.push({ uri, state: 'loading', at: new Date().toISOString() });
+        const result = await loadOne(uri);
+        active = {
+          ...result,
+          parameters: uri.includes('Qwen_Qwen3-4B') ? 4000000000 : uri.includes('3B') ? 3000000000 : uri.includes('1.5B') ? 1500000000 : 500000000
+        };
+        attempts[attempts.length - 1].state = 'ready';
+        attempts[attempts.length - 1].at = new Date().toISOString();
+        return active;
+      } catch (error) {
+        attempts[attempts.length - 1].state = 'failed';
+        attempts[attempts.length - 1].error = String(error?.message || error);
+        attempts[attempts.length - 1].at = new Date().toISOString();
+      }
+    }
+    throw new Error('No se pudo cargar ningún modelo compatible. Revisa la RAM disponible y los logs del servicio.');
+  })().finally(() => { loadingModel = null; });
+
+  return loadingModel;
+}
+
+function toHistory(messages) {
+  const clean = Array.isArray(messages)
+    ? messages.filter(m => m && ['user', 'assistant'].includes(m.role) && typeof m.content === 'string' && m.content.trim())
+    : [];
+
+  const trimmed = clean.slice(-18);
+  const history = [{ type: 'system', text: SYSTEM_PROMPT }];
+  for (const m of trimmed) {
+    history.push(m.role === 'user'
+      ? { type: 'user', text: m.content }
+      : { type: 'model', response: [m.content] });
+  }
+  return history;
+}
+
+async function createSession(history) {
+  const bundle = await getModel();
+  const context = await bundle.loaded.createContext();
   const session = new LlamaChatSession({ contextSequence: context.getSequence() });
+  session.setChatHistory(toHistory(history));
+  return { session, bundle };
+}
 
-  // Inject system
-  const history = [
-    { role: 'system', content: SYSTEM_PROMPT },
-    ...messages.filter(x => x && (x.role === 'user' || x.role === 'assistant')).map(x => ({
-      role: x.role,
-      content: String(x.content || '').slice(0, 120000)
-    }))
-  ];
+export async function streamAnswer(history, onChunk, options = {}) {
+  const safeHistory = Array.isArray(history) ? history : [];
+  const last = safeHistory.at(-1);
+  if (!last || last.role !== 'user' || !String(last.content || '').trim()) {
+    throw new Error('Falta un mensaje de usuario válido.');
+  }
 
-  let streamed = '';
-  const response = await session.prompt(history.map(h => `${h.role === 'system' ? 'System' : h.role === 'user' ? 'User' : 'Assistant'}: ${h.content}`).join('\n\n') + '\n\nAssistant:', {
-    maxTokens: MAX_TOKENS,
-    temperature: 0.7,
-    topP: 0.9,
-    topK: 40,
-    repeatPenalty: {
-      lastTokens: 128,
-      penalty: 1.12,
-      penalizeNewLine: false,
-      frequencyPenalty: 0.02,
-      presencePenalty: 0.02
-    },
+  const { session, bundle } = await createSession(safeHistory.slice(0, -1));
+  const prompt = last.content.trim();
+  let full = '';
+
+  const result = await session.prompt(prompt, {
+    maxTokens: Math.min(MAX_TOKENS, Number(options.maxTokens || MAX_TOKENS)),
+    temperature: typeof options.temperature === 'number' ? options.temperature : 0.72,
+    topP: typeof options.topP === 'number' ? options.topP : 0.92,
+    topK: typeof options.topK === 'number' ? options.topK : 40,
+    repeatPenalty: { lastTokens: 96, penalty: 1.10, penalizeNewLine: false },
     onTextChunk(chunk) {
-      const s = String(chunk || '');
-      if (!s) return;
-      streamed += s;
-      onChunk(s);
+      if (!chunk) return;
+      full += chunk;
+      onChunk(chunk);
     }
   });
 
-  const text = streamed.trim() || (typeof response === 'string' ? response.trim() : String(response?.response ?? response?.responseText ?? response?.completion ?? '').trim());
-  if (!text) {
-    throw new Error('El modelo terminó sin generar texto. Revisa memoria disponible, quantización y los logs del servicio.');
+  const finalText = String(result || full || '').trim();
+  if (!finalText) {
+    throw new Error('El modelo terminó sin texto. Revisa el modelo cargado y la RAM del servicio.');
   }
+
   return {
-    text,
-    model: MODEL_URI,
-    parameters: modelInfo?.parameters || 14000000000,
-    modelPath,
-    contextSize: context.contextSize || contextSize,
+    text: finalText,
+    model: bundle.uri,
+    modelPath: bundle.modelPath,
+    parameters: bundle.parameters,
+    totalMemoryGB: totalMemoryGB()
   };
 }
 
-export async function warmup() { await loadModel(); }
+export async function warmup() {
+  const bundle = await getModel();
+  const context = await bundle.loaded.createContext();
+  const session = new LlamaChatSession({ contextSequence: context.getSequence() });
+  session.setChatHistory([{ type: 'system', text: SYSTEM_PROMPT }]);
+  let out = '';
+  await session.prompt('Responde únicamente: OK', {
+    maxTokens: 8,
+    temperature: 0,
+    onTextChunk(chunk) { out += chunk; }
+  });
+  if (!out.trim()) throw new Error('El warmup no produjo texto.');
+  return out.trim();
+}
 
 export function llmStatus() {
   return {
-    ready: !!model,
-    loading: !!modelPromise,
-    model: MODEL_URI,
-    parameters: modelInfo?.parameters || 14000000000,
-    contextMax: CONTEXT_MAX,
-    contextMin: CONTEXT_MIN,
+    ready: !!active,
+    loading: !!loadingModel,
+    model: active?.uri || FAST_MODEL,
+    parameters: active?.parameters || (FAST_MODEL.includes('4B') ? 4000000000 : 0),
+    context: CONTEXT_SIZE,
     maxTokens: MAX_TOKENS,
-    loadedAt,
-    modelPath,
-    modelInfo,
-    error: lastError,
+    totalMemoryGB: Number(totalMemoryGB().toFixed(2)),
+    attempts: attempts.slice(-6)
   };
 }
