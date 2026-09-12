@@ -1,18 +1,12 @@
 {
-  "name": "qyrexai-workspace-server",
-  "version": "2.0.0",
-  "description": "Node.js Express backend proxy for QyrexAI Workspace (OpenRouter)",
-  "main": "server.js",
+  "name": "qyrexai-local",
+  "version": "2.1.0",
+  "private": true,
+  "description": "QyrexAI local neural web app, no external AI APIs",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
-  },
-  "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.19.2"
+    "start": "node server.js"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=18"
   }
 }
