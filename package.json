@@ -1,10 +1,10 @@
 {
   "name": "qyrexai-pro-max-real",
-  "version": "7.0.0",
+  "version": "8.0.0",
   "private": true,
   "type": "module",
-  "description": "QyrexAI Pro Max - robust local LLM with persistent chats/files and model fallbacks",
+  "description": "QyrexAI Render-friendly local assistant with Transformers.js ONNX streaming",
   "scripts": {"start": "node server.js"},
   "engines": {"node": ">=20"},
-  "dependencies": {"node-llama-cpp": "3.20.0"}
+  "dependencies": {"@huggingface/transformers": "^4.2.0"}
 }

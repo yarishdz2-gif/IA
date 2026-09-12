@@ -1,18 +1,15 @@
 {
-  "name": "QyrexAI Pro Max 7.0",
-  "primary": "bartowski/Qwen_Qwen3-4B-Instruct-2507-GGUF",
-  "quantization": "Q4_K_M",
-  "parameters": 4000000000,
-  "runtime": "node-llama-cpp 3.20.0",
-  "inference": "local server process, no hosted inference API",
-  "selection": "Qwen3-4B primary, then Qwen2.5 3B/1.5B/0.5B fallbacks",
-  "context": 8192,
-  "max_new_tokens": 900,
+  "name": "QyrexAI Fast Local 0.5B",
+  "primary": "Mozilla/Qwen2.5-0.5B-Instruct",
+  "parameters": 500000000,
+  "quantization": "ONNX q4",
+  "runtime": "Transformers.js 4.2",
+  "streaming": "TextStreamer",
+  "reason": "Prioritize reliable startup and visible token streaming on Render CPU",
   "persistent": {
     "conversations": true,
     "files": true,
     "images": true,
-    "model_profiles": true
-  },
-  "diagnostics": "/api/status and /api/test"
+    "model_cache": true
+  }
 }

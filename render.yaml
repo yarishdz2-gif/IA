@@ -8,14 +8,16 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: QYREX_MODEL_URI
-        value: hf:bartowski/Qwen_Qwen3-4B-Instruct-2507-GGUF:Q4_K_M
-      - key: QYREX_CONTEXT
-        value: "8192"
+      - key: QYREX_MODEL_ID
+        value: Mozilla/Qwen2.5-0.5B-Instruct
+      - key: QYREX_DTYPE
+        value: q4
       - key: QYREX_MAX_TOKENS
-        value: "900"
-      - key: QYREX_ALLOW_ALL_MODELS
-        value: "1"
+        value: "384"
+      - key: QYREX_MAX_TIME
+        value: "18"
+      - key: QYREX_CONTEXT_MESSAGES
+        value: "10"
     disk:
       name: qyrexai-data
       mountPath: /opt/render/project/src/data
