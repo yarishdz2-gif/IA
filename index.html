@@ -37,7 +37,7 @@ body{display:flex;overflow:hidden}
 .msg{max-width:84%;border:1px solid var(--bd);border-radius:16px;padding:12px 14px;font-size:13px;line-height:1.65;background:#101217}
 .row.user .msg{background:#1a1725;border-color:#373043}.meta{font-size:9px;color:#73798a;border-bottom:1px solid var(--bd);padding-bottom:7px;margin-bottom:9px}
 .msg pre{overflow:auto;background:#0b0c0f;border:1px solid #252936;border-radius:11px;padding:12px;font-size:12px}
-.msg code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.thinking{font-size:10px;color:#72ddb3;margin-bottom:7px}
+.msg code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.thinking{font-size:10px;color:#72ddb3;margin-bottom:7px}.typing{display:inline-flex;gap:4px;align-items:center}.typing i{width:5px;height:5px;border-radius:50%;background:#9b87ff;opacity:.35;animation:blink 1s infinite}.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}@keyframes blink{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:1;transform:translateY(-2px)}}.streaming{min-height:24px}.loadbar{height:3px;background:#0b0c10;position:fixed;top:64px;left:250px;right:0;z-index:20;display:none}.loadbar.show{display:block}.loadbar i{display:block;height:100%;width:25%;background:linear-gradient(90deg,transparent,var(--violet),var(--cyan),transparent);animation:slide 1.15s infinite}@keyframes slide{from{transform:translateX(-120%)}to{transform:translateX(520%)}}
 .composer{position:fixed;left:250px;right:0;bottom:0;padding:12px 18px;background:linear-gradient(180deg,transparent,#09090cef 26% 100%);pointer-events:none}
 .composer-inner{width:min(900px,100%);margin:auto;pointer-events:auto}
 .inputbox{display:flex;gap:9px;align-items:flex-end;background:#11131a;border:1px solid #2a2f3c;border-radius:17px;padding:9px;box-shadow:0 12px 40px #00000055}
@@ -51,7 +51,7 @@ textarea{flex:1;resize:none;max-height:160px;background:transparent;border:0;out
 .control-row{display:flex;gap:8px;flex-wrap:wrap}.control-row button{border:1px solid #2a3040;background:#161923;color:#d7dbea;padding:8px 10px;border-radius:9px;font-size:11px}.control-row button:hover{background:#1d202c}
 .notice{font-size:11px;line-height:1.5;color:#98a0b1;border:1px solid #2a3040;border-radius:11px;padding:10px;background:#0d0f14}
 @media(max-width:760px){
- .sidebar{display:none}.composer{left:0}.top{padding:0 12px}.chat-inner{padding-left:11px;padding-right:11px}.msg{max-width:90%}
+ .sidebar{display:none}.composer{left:0}.loadbar{left:0}.top{padding:0 12px}.chat-inner{padding-left:11px;padding-right:11px}.msg{max-width:90%}
  .stat-grid{grid-template-columns:1fr 1fr}
 }
 </style>
@@ -88,6 +88,7 @@ textarea{flex:1;resize:none;max-height:160px;background:transparent;border:0;out
   </aside>
 
   <main class="main">
+    <div id="loadbar" class="loadbar"><i></i></div>
     <header class="top">
       <div class="top-left">
         <div class="top-title">QyrexAI</div><div class="chip">LOCAL LLM</div><div class="chip">NO INFERENCE API</div>
@@ -113,14 +114,14 @@ textarea{flex:1;resize:none;max-height:160px;background:transparent;border:0;out
 
 <div class="overlay" id="modelOverlay" onclick="if(event.target===this)closeModel()">
  <div class="modal">
-  <div class="modal-head"><div><b>Motor neuronal local</b><div style="font-size:10px;color:#858c9e;margin-top:2px">Entrenamiento e inferencia dentro de este navegador</div></div><button class="icon-btn" onclick="closeModel()">Cerrar</button></div>
+  <div class="modal-head"><div><b>Motor neuronal local</b><div style="font-size:10px;color:#858c9e;margin-top:2px">Entrenamiento auxiliar local · inferencia generativa en tu servidor</div></div><button class="icon-btn" onclick="closeModel()">Cerrar</button></div>
   <div class="modal-body">
     <div class="stat-grid">
       <div class="stat"><b id="statParams">0</b><span>parámetros totales</span></div>
       <div class="stat"><b id="statTrainable">0</b><span>parámetros adaptativos</span></div>
       <div class="stat"><b id="statMemory">0</b><span>memorias guardadas</span></div>
     </div>
-    <div class="notice">QyrexAI usa un LLM generativo real ejecutado por tu propio servidor Node mediante Transformers.js. No usa una API de inferencia de OpenAI, Gemini o Claude. El modelo se descarga y queda en caché en Render en el primer arranque del motor.</div>
+    <div class="notice">QyrexAI usa un LLM generativo real ejecutado por tu propio servidor Node mediante Transformers.js. No usa una API de inferencia de OpenAI, Gemini o Claude. El servidor intenta automáticamente modelos y cuantizaciones compatibles y guarda el modelo en caché.</div>
     <div><div style="display:flex;justify-content:space-between;font-size:10px;color:#9097a8;margin-bottom:6px"><span>Entrenamiento local</span><span id="trainLabel">0 ejemplos</span></div><div class="progress"><i id="trainProgress"></i></div></div>
     <div class="control-row">
       <button onclick="trainStarter()">Entrenar dataset local</button>
@@ -139,37 +140,34 @@ class QyrexApp{
  constructor(){this.model=new QyrexLocalModel();this.engine=new QyrexEngine(this.model);this.turns=0;this.messages=[];this.loading=false;this._load();}
  _load(){this.engine.load();try{const raw=localStorage.getItem('qyrex_model_meta_v2');if(raw){const d=JSON.parse(raw);this.model.step=d.step||0;this.model.examples=d.examples||0}const h=localStorage.getItem('qyrex_chat_v3');if(h)this.messages=JSON.parse(h).slice(-12);}catch(e){this.messages=[];}}
  _save(){try{localStorage.setItem('qyrex_model_meta_v2',JSON.stringify({step:this.model.step,examples:this.model.examples}));localStorage.setItem('qyrex_chat_v3',JSON.stringify(this.messages.slice(-12)));}catch(e){}}
- async init(){this.renderWelcome();this.updateStats();this.refreshStatus();document.getElementById('prompt').focus();}
- renderWelcome(){document.getElementById('chatInner').innerHTML='';this.aiMsg('**QyrexAI Real** está listo.\n\nAhora sí tengo un **motor generativo de lenguaje** detrás de la interfaz. Puedo mantener contexto, seguir instrucciones, explicar cosas y generar código en vez de limitarme a respuestas preprogramadas.\n\nLa primera respuesta puede tardar más porque Render debe cargar el modelo en memoria.');}
+ async init(){this.renderWelcome();this.updateStats();this.refreshStatus();setInterval(()=>this.refreshStatus(),2500);this.warmup();document.getElementById('prompt').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();this.send();}});document.getElementById('prompt').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,160)+'px'});document.getElementById('prompt').focus();}
+ renderWelcome(){document.getElementById('chatInner').innerHTML='';this.aiMsg('**QyrexAI** está listo.\n\nEscribe cualquier cosa. La respuesta aparecerá **mientras se genera**, como en un chat moderno.\n\n**Nota:** la primera respuesta puede tardar porque Render debe descargar y cargar el modelo.');}
  updateStats(){const n=this.model.parameterCount().toLocaleString();document.getElementById('turns').textContent=this.turns;document.getElementById('paramsSide').textContent=n;document.getElementById('memorySide').textContent=this.engine.memory.length;document.getElementById('statParams').textContent=n;document.getElementById('statTrainable').textContent=n;document.getElementById('statMemory').textContent=this.engine.memory.length;document.getElementById('trainLabel').textContent=this.model.examples+' ejemplos';}
- aiMsg(text){const el=document.createElement('div');el.className='row';el.innerHTML='<div class="avatar ai">Q</div><div class="msg"><div class="meta">QyrexAI · generative local</div>'+QyrexMarkdown(text)+'</div>';document.getElementById('chatInner').appendChild(el);this.scroll();}
+ aiMsg(text){const el=document.createElement('div');el.className='row';el.innerHTML='<div class="avatar ai">Q</div><div class="msg"><div class="meta">QyrexAI · generative local</div>'+QyrexMarkdown(text)+'</div>';document.getElementById('chatInner').appendChild(el);this.scroll();return el.querySelector('.msg');}
  userMsg(text){const el=document.createElement('div');el.className='row user';el.innerHTML='<div class="msg">'+QyrexMarkdown(text)+'</div><div class="avatar user">TÚ</div>';document.getElementById('chatInner').appendChild(el);this.scroll();}
+ createStreamingBubble(){const el=document.createElement('div');el.className='row';el.innerHTML='<div class="avatar ai">Q</div><div class="msg"><div class="meta">QyrexAI · generative local</div><div class="streaming"><span class="typing"><i></i><i></i><i></i></span><span class="stream-text"></span></div></div>';document.getElementById('chatInner').appendChild(el);this.scroll();return {root:el,text:el.querySelector('.stream-text'),box:el.querySelector('.streaming'),meta:el.querySelector('.meta')};}
  scroll(){const c=document.getElementById('chat');c.scrollTop=c.scrollHeight;}
+ setBusy(on){this.loading=on;const state=document.getElementById('stateText'),bar=document.getElementById('loadbar'),btn=document.querySelector('.send');bar.classList.toggle('show',on);if(btn)btn.disabled=on;state.textContent=on?'Generando respuesta…':'LLM listo';}
+ async refreshStatus(){try{const r=await fetch('/api/status',{cache:'no-store'});const d=await r.json();const llm=d.llm||{};const state=document.getElementById('stateText');if(this.loading)state.textContent='Generando respuesta…';else if(llm.ready)state.textContent='LLM listo';else if(llm.loading)state.textContent='Cargando modelo…';else if(llm.error)state.textContent='Reintentando motor…';else state.textContent='LLM bajo demanda';}catch{if(!this.loading)document.getElementById('stateText').textContent='Servidor local';}}
+ async warmup(){try{await fetch('/api/warmup',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});}catch{}finally{this.refreshStatus();}}
  newChat(){this.messages=[];this.turns=0;try{localStorage.removeItem('qyrex_chat_v3')}catch{};document.getElementById('chatInner').innerHTML='';this.renderWelcome();this.updateStats();}
- async refreshStatus(){try{const r=await fetch('/api/status');const d=await r.json();const llm=d.llm||{};document.getElementById('stateText').textContent=llm.ready?'LLM listo':(llm.loading?'Cargando LLM…':'LLM bajo demanda');}catch{document.getElementById('stateText').textContent='Servidor local';}}
- async send(){if(this.loading)return;const ta=document.getElementById('prompt');const raw=ta.value.trim();if(!raw)return;ta.value='';ta.style.height='auto';this.userMsg(raw);this.turns++;this.loading=true;const state=document.getElementById('stateText');state.textContent='Generando respuesta…';const t=performance.now();
-   this.messages.push({role:'user',content:raw});
+ async send(){if(this.loading)return;const ta=document.getElementById('prompt'),raw=ta.value.trim();if(!raw)return;ta.value='';ta.style.height='auto';this.userMsg(raw);this.turns++;this.setBusy(true);const t=performance.now();this.messages.push({role:'user',content:raw});const bubble=this.createStreamingBubble();let answer='';let gotToken=false;
    try{
-     const response=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:this.messages,max_new_tokens:512,temperature:.7,top_p:.9})});
-     const data=await response.json();
-     if(!response.ok||!data.ok)throw new Error(data.error||'No se pudo generar la respuesta.');
-     const answer=(data.answer||'').trim();
-     this.messages.push({role:'assistant',content:answer});
-     const emb=this.model.encode(raw);this.engine.remember(raw,answer,emb);this._save();this.updateStats();
-     this.aiMsg(answer+'\n\n<span style="color:#70788a;font-size:10px">LLM local · '+Math.round(performance.now()-t)+' ms · '+(data.model||'Qwen3')+'</span>');
-     state.textContent='LLM listo';
+     const response=await fetch('/api/chat-stream',{method:'POST',headers:{'Content-Type':'application/json','Accept':'text/event-stream'},body:JSON.stringify({messages:this.messages,max_new_tokens:768,temperature:.7,top_p:.9})});
+     if(!response.ok||!response.body)throw new Error('No se pudo abrir el canal de respuesta.');
+     const reader=response.body.getReader();const decoder=new TextDecoder();let buffer='';
+     const consume=chunk=>{buffer+=decoder.decode(chunk,{stream:true});const events=buffer.split('\n\n');buffer=events.pop()||'';for(const evt of events){let type='message',data='';for(const line of evt.split('\n')){if(line.startsWith('event:'))type=line.slice(6).trim();if(line.startsWith('data:'))data+=line.slice(5).trim();}if(!data)continue;let obj;try{obj=JSON.parse(data)}catch{continue}if(type==='token'){gotToken=true;answer+=obj.text||'';bubble.box.innerHTML=QyrexMarkdown(answer);this.scroll();}else if(type==='error'){throw new Error(obj.error||'Error de generación.');}else if(type==='done'&&!answer)answer=obj.answer||'';}}
+     while(true){const {done,value}=await reader.read();if(done)break;consume(value);}if(!answer.trim())throw new Error('El modelo no devolvió texto.');
+     this.messages.push({role:'assistant',content:answer.trim()});const emb=this.model.encode(raw);this.engine.remember(raw,answer.trim(),emb);this._save();this.updateStats();bubble.meta.textContent='QyrexAI · '+Math.round(performance.now()-t)+' ms';
    }catch(error){
-     const fallback=this.engine.respond(raw);
-     this.messages.pop();
-     this.aiMsg('No pude cargar el LLM en este momento.\n\n'+fallback+'\n\n<span style="color:#70788a;font-size:10px">Fallback local · '+Math.round(performance.now()-t)+' ms</span>');
-     state.textContent='Fallback local';
-   }finally{this.loading=false;}
+     const fallback=this.engine.respond(raw);this.messages.pop();bubble.box.innerHTML='<div>'+QyrexMarkdown(fallback)+'</div><div style="color:#70788a;font-size:10px;margin-top:8px">Fallback local · '+Math.round(performance.now()-t)+' ms</div>';this.messages.push({role:'assistant',content:fallback});this._save();
+   }finally{this.setBusy(false);this.refreshStatus();}
  }
  openModel(){document.getElementById('modelOverlay').classList.add('show');this.updateStats();this.refreshStatus();}
  closeModel(){document.getElementById('modelOverlay').classList.remove('show');}
  async trainStarter(){const status=document.getElementById('trainStatus'),bar=document.getElementById('trainProgress');status.textContent='Entrenando adaptaciones locales…';bar.style.width='0%';const pairs=QyrexStarterDataset.map(x=>({text:x[0],label:x[1]}));await this.model.train(pairs,async(n,total)=>{bar.style.width=(n/total*100).toFixed(1)+'%';status.textContent='Entrenando '+n+'/'+total+' ejemplos…';this.updateStats()});this._save();this.updateStats();status.textContent='Adaptación local terminada. El LLM generativo sigue siendo el motor principal.';}
  clearLearning(){localStorage.removeItem('qyrex_model_meta_v2');localStorage.removeItem('qyrex_memory_v2');localStorage.removeItem('qyrex_chat_v3');this.model=new QyrexLocalModel();this.engine=new QyrexEngine(this.model);this.turns=0;this.messages=[];this.updateStats();document.getElementById('trainProgress').style.width='0%';document.getElementById('trainStatus').textContent='Aprendizaje, memoria y contexto borrados.';this.renderWelcome();}
- exportModel(){const d={version:'3.0.0',meta:this.model.exportMeta(),memory:this.engine.memory,chat:this.messages};const blob=new Blob([JSON.stringify(d)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='qyrexai-local-learning.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);}
+ exportModel(){const d={version:'4.0.0',meta:this.model.exportMeta(),memory:this.engine.memory,chat:this.messages};const blob=new Blob([JSON.stringify(d)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='qyrexai-local-learning.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);}
  async importModel(e){const f=e.target.files&&e.target.files[0];if(!f)return;try{const d=JSON.parse(await f.text());if(Array.isArray(d.memory)){this.engine.memory=d.memory.slice(-300);this.engine.save()}if(Array.isArray(d.chat))this.messages=d.chat.slice(-12);if(d.meta){this.model.step=d.meta.step||0;this.model.examples=d.meta.examples||0;this._save()}document.getElementById('trainStatus').textContent='Memoria y contexto importados.';this.updateStats()}catch(err){document.getElementById('trainStatus').textContent='Archivo de aprendizaje inválido.'}e.target.value='';}
  downloadWeights(){const meta=this.model.exportMeta();const blob=new Blob([JSON.stringify(meta,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='qyrexai-neural-metadata.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);}
 }

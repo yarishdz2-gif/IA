@@ -1,29 +1,49 @@
-# QyrexAI Real 3.0
+# QyrexAI Real — Render
 
-QyrexAI Real is a Render-ready Node application with a web UI, persistent browser memory, a local neural utility core, and a real generative LLM executed by your own Node process through Transformers.js.
+Asistente conversacional con LLM generativo local en tu propio servidor Node. La interfaz muestra la respuesta mientras el modelo la genera, en lugar de esperar a que termine toda la inferencia.
+
+## Qué usa
+- Node.js + `server.js`
+- Transformers.js
+- `onnx-community/Qwen2.5-0.5B-Instruct` por defecto
+- `TextStreamer` para streaming token a token
+- Memoria/contexto en el navegador mediante `localStorage`
+- Sin OpenAI/Gemini/Claude ni API de inferencia externa
+
+El modelo ONNX de Qwen3 está publicado para Transformers.js y soporta `TextStreamer`; la variante `q4f16` está cuantizada para reducir memoria. Consulta el modelo configurado en `QYREX_MODEL` si quieres cambiarlo.
 
 ## Render
+Build Command:
+```text
+npm install
+```
+Start Command:
+```text
+node server.js
+```
 
-Runtime: Node
-Build command: `npm install`
-Start command: `node server.js`
+Health check:
+```text
+/health
+```
 
-The server listens on `0.0.0.0` and `process.env.PORT`.
+## Variables opcionales
+```text
+QYREX_MODEL=onnx-community/Qwen2.5-0.5B-Instruct
+QYREX_DTYPE=q4f16
+QYREX_MAX_NEW_TOKENS=768
+QYREX_MAX_HISTORY=12
+QYREX_MODEL_CACHE=./.qcache
+```
 
-## Real LLM
+## Flujo
+1. Render inicia `server.js`.
+2. La web consulta `/api/status` y comienza el precalentamiento en `/api/warmup`.
+3. Al enviar un mensaje, el navegador abre `/api/chat-stream`.
+4. El servidor usa `TextStreamer` y envía eventos SSE conforme genera tokens.
+5. La interfaz pinta el texto inmediatamente y guarda el turno en memoria local.
 
-Default model:
-`onnx-community/Qwen3-0.6B-DQ-ONNX`
+La primera carga es más lenta porque el modelo debe descargarse y entrar en caché. Las siguientes peticiones reutilizan el modelo mientras el proceso de Render siga vivo.
 
-The model is quantized and is fetched/cached automatically by Transformers.js on the first model load. No OpenAI/Gemini/Claude inference API is used.
 
-Environment variables:
-- `QYREX_MODEL` to select another compatible Transformers.js text-generation model.
-- `QYREX_MAX_NEW_TOKENS` to change the generation limit.
-- `QYREX_MODEL_CACHE` to change the model cache directory.
-
-## Important
-
-This is now an actual generative assistant, but it is not honest to call it "better than Gemini" simply from the UI or parameter count. The included 0.6B model is a real pretrained model and is far more capable than the previous rule-only fallback, but frontier models are much larger and trained on much more data.
-
-The old local neural core is retained as a fallback when the generative model is unavailable.
+El servidor prueba automáticamente `onnx-community/Qwen2.5-0.5B-Instruct` y `onnx-community/Qwen3-0.6B-ONNX`, primero con `q4f16` y después con `q4`. Puedes cambiarlo con `QYREX_MODELS` y `QYREX_DTYPES`.

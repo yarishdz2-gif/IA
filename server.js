@@ -1,7 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { chat, getGenerator, status: llmStatus, MODEL_ID } = require('./llm-server');
+const { chat, streamChat, getGenerator, status: llmStatus, MODEL_ID } = require('./llm-server');
 
 const PORT = Number(process.env.PORT) || 10000;
 const HOST = '0.0.0.0';
@@ -55,6 +55,30 @@ const server=http.createServer(async(req,res)=>{
       const answer=await chat(body.messages,{max_new_tokens:body.max_new_tokens,temperature:body.temperature,top_p:body.top_p});
       if(!answer) throw new Error('The model returned an empty response.');
       return send(res,200,JSON.stringify({ok:true,answer,ms:Date.now()-started,model:MODEL_ID}),MIME['.json']);
+    }
+    if(req.url==='/api/chat-stream' && req.method==='POST'){
+      const body=await readJson(req);
+      if(!Array.isArray(body.messages)) return send(res,400,JSON.stringify({ok:false,error:'messages must be an array'}),MIME['.json']);
+      res.writeHead(200,{
+        'Content-Type':'text/event-stream; charset=utf-8',
+        'Cache-Control':'no-cache, no-transform',
+        'Connection':'keep-alive',
+        'X-Accel-Buffering':'no',
+        'X-Content-Type-Options':'nosniff'
+      });
+      const started=Date.now();
+      const writeEvent=(event,payload)=>{res.write(`event: ${event}\ndata: ${JSON.stringify(payload)}\n\n`);};
+      writeEvent('start',{model:MODEL_ID});
+      try{
+        const answer=await streamChat(body.messages,{max_new_tokens:body.max_new_tokens,temperature:body.temperature,top_p:body.top_p},text=>writeEvent('token',{text}));
+        if(!answer) throw new Error('El modelo devolvió una respuesta vacía.');
+        writeEvent('done',{answer,ms:Date.now()-started,model:MODEL_ID});
+      }catch(e){
+        writeEvent('error',{error:String(e.message||e)});
+      }finally{
+        res.end();
+      }
+      return;
     }
     if(req.method!=='GET' && req.method!=='HEAD') return send(res,405,'Method Not Allowed');
     const requested=safePath(req.url);
