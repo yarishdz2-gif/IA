@@ -1,37 +1,30 @@
-# QyrexAI Ultra
+# QyrexAI Pro Max 6.0
 
-Asistente generativo local para Render/Node.js, sin proveedor de inferencia de IA externo.
+QyrexAI Pro Max usa un LLM de **7B parámetros** con pesos preentrenados, ejecutado localmente dentro de tu propio proceso Node mediante `node-llama-cpp`. El modelo se resuelve desde Hugging Face con la URI `hf:Qwen/Qwen2.5-7B-Instruct-GGUF:Q4_K_M` y queda en el caché/modelos persistente del servicio.
 
-## Motor
+El proyecto guarda en servidor:
+- conversaciones y mensajes
+- chats abiertos/cerrados
+- archivos e imágenes subidos
+- perfiles de modelos
+- preferencias básicas
 
-El motor principal usa `opalitestudios/Qwen2.5-3B-Instruct-ONNX` con cuantización `q4f16`. Si ese modelo no puede cargarse, el servidor baja automáticamente a Qwen3 1.7B, Qwen2.5 1.5B y finalmente 0.5B.
-
-El modelo principal tiene ~3B parámetros, por lo que supera ampliamente el aumento de 500M solicitado respecto al modelo anterior de 1.5B.
+La API de inferencia es **local al propio servidor**: no se llama a OpenAI, Gemini, Claude ni Grok para generar la respuesta.
 
 ## Render
 
-- Build Command: `npm install`
-- Start Command: `node server.js`
-- Health Check: `/health`
+Build: `npm install`
 
-## Variables opcionales
+Start: `node server.js`
 
-- `QYREX_MODELS` para personalizar el orden de modelos.
-- `QYREX_DTYPES` para personalizar cuantización; normalmente `q4f16,q4`.
-- `QYREX_MAX_NEW_TOKENS` para limitar salida.
-- `QYREX_MAX_HISTORY` para el contexto conversacional.
-- `QYREX_MODEL_CACHE` para el directorio de cache.
+Health: `/health`
 
-## Endpoints
+Para que chats, archivos e imágenes persistan después de reinicios/redeploys, usa el disco persistente incluido en `render.yaml`.
 
-- `GET /health`
-- `GET /api/status`
-- `POST /api/warmup`
-- `POST /api/chat`
-- `POST /api/chat-stream`
+### Modelo
 
-## Importante
+Predeterminado: `Qwen/Qwen2.5-7B-Instruct`, cuantización `Q4_K_M`. Qwen publica el modelo GGUF y documenta su uso con llama.cpp; `node-llama-cpp` puede resolver modelos Hugging Face usando la URI `hf:<user>/<model>:<quant>`.
 
-El primer arranque puede ser lento porque Render debe descargar los pesos del modelo. La app muestra el estado de carga y después transmite la respuesta progresivamente.
+### Nota de capacidad
 
-El rendimiento real depende de CPU, RAM y almacenamiento del plan de Render. Un modelo de 3B requiere bastante más memoria que uno de 0.5B/1.5B.
+7B > 5B parámetros reales, pero el número de parámetros no garantiza superar modelos comerciales de frontera. La calidad depende de los pesos, entrenamiento, contexto, herramientas y hardware de inferencia.

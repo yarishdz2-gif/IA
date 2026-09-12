@@ -1,12 +1,17 @@
 {
-  "name": "QyrexAI Ultra",
-  "primary": "opalitestudios/Qwen2.5-3B-Instruct-ONNX",
-  "secondary": "onnx-community/Qwen3-1.7B-ONNX",
-  "fallback": "onnx-community/Qwen2.5-1.5B-Instruct",
-  "lastFallback": "onnx-community/Qwen2.5-0.5B-Instruct",
-  "primaryParameters": 3000000000,
-  "previousParameters": 1500000000,
-  "extraOverPrevious": 1500000000,
-  "quantization": "q4f16",
-  "note": "Uses real pretrained weights. The primary model is about 3B parameters, exceeding the requested +500M increase; quantization reduces memory/storage, not the architecture parameter count."
+  "name": "QyrexAI Pro Max 6.0",
+  "primary": "Qwen/Qwen2.5-7B-Instruct-GGUF",
+  "quantization": "Q4_K_M",
+  "parameters": 7000000000,
+  "runtime": "node-llama-cpp",
+  "inference": "local process, no OpenAI/Gemini/Claude/Grok inference API",
+  "context": 8192,
+  "max_new_tokens": 1200,
+  "persistent": {
+    "conversations": true,
+    "files": true,
+    "images": true,
+    "model_profiles": true
+  },
+  "fallback": "Set QYREX_MODEL_URI to another GGUF if the host cannot load 7B."
 }

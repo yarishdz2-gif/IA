@@ -1,21 +1,20 @@
 services:
   - type: web
-    name: qyrexai-ultra
+    name: qyrexai-pro-max
     runtime: node
-    plan: starter
     buildCommand: npm install
     startCommand: node server.js
     healthCheckPath: /health
     envVars:
-      - key: NODE_VERSION
-        value: 20
-      - key: QYREX_MAX_NEW_TOKENS
-        value: 1200
-      - key: QYREX_MAX_HISTORY
-        value: 18
-      - key: QYREX_MAX_CONTEXT_CHARS
-        value: 60000
-      - key: QYREX_DTYPES
-        value: q4f16,q4
-      - key: QYREX_MODELS
-        value: opalitestudios/Qwen2.5-3B-Instruct-ONNX,onnx-community/Qwen3-1.7B-ONNX,onnx-community/Qwen2.5-1.5B-Instruct,onnx-community/Qwen2.5-0.5B-Instruct
+      - key: NODE_ENV
+        value: production
+      - key: QYREX_MODEL_URI
+        value: hf:Qwen/Qwen2.5-7B-Instruct-GGUF:Q4_K_M
+      - key: QYREX_CONTEXT
+        value: "8192"
+      - key: QYREX_MAX_TOKENS
+        value: "1200"
+    disk:
+      name: qyrexai-data
+      mountPath: /opt/render/project/src/data
+      sizeGB: 10
