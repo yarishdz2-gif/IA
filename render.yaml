@@ -10,8 +10,10 @@ services:
         value: production
       - key: QYREX_MODEL_URI
         value: hf:Qwen/Qwen2.5-7B-Instruct-GGUF:Q4_K_M
-      - key: QYREX_CONTEXT
+      - key: QYREX_CONTEXT_MAX
         value: "8192"
+      - key: QYREX_CONTEXT_MIN
+        value: "2048"
       - key: QYREX_MAX_TOKENS
         value: "1200"
     disk:
