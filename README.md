@@ -1,24 +1,29 @@
-# QyrexAI Local 2.0 — Render / sin APIs
+# QyrexAI Real 3.0
 
-IA experimental 100% local para desplegar como sitio estático en Render.
-
-## Núcleo
-- 8,388,608 parámetros reales en `Float32Array`.
-- Embeddings de 256 dimensiones.
-- 6 bloques neuronales locales.
-- Clasificación neural y similitud semántica.
-- Entrenamiento incremental en el navegador.
-- Memoria persistente con localStorage.
-- Sin OpenAI, Claude, Gemini ni APIs de inferencia.
+QyrexAI Real is a Render-ready Node application with a web UI, persistent browser memory, a local neural utility core, and a real generative LLM executed by your own Node process through Transformers.js.
 
 ## Render
-1. Sube este directorio a GitHub.
-2. En Render crea **Static Site**.
-3. Selecciona el repositorio.
-4. Build Command: vacío.
-5. Publish Directory: `.`
 
-También se incluye `render.yaml` para configuración declarativa.
+Runtime: Node
+Build command: `npm install`
+Start command: `node server.js`
 
-## Nota técnica
-Millones de parámetros no garantizan por sí solos la inteligencia de un LLM de frontera. QyrexAI usa un núcleo neuronal local real combinado con memoria, herramientas deterministas y un dataset inicial. Para aumentar la calidad conversacional hace falta entrenar pesos con un corpus grande y datos de calidad.
+The server listens on `0.0.0.0` and `process.env.PORT`.
+
+## Real LLM
+
+Default model:
+`onnx-community/Qwen3-0.6B-DQ-ONNX`
+
+The model is quantized and is fetched/cached automatically by Transformers.js on the first model load. No OpenAI/Gemini/Claude inference API is used.
+
+Environment variables:
+- `QYREX_MODEL` to select another compatible Transformers.js text-generation model.
+- `QYREX_MAX_NEW_TOKENS` to change the generation limit.
+- `QYREX_MODEL_CACHE` to change the model cache directory.
+
+## Important
+
+This is now an actual generative assistant, but it is not honest to call it "better than Gemini" simply from the UI or parameter count. The included 0.6B model is a real pretrained model and is far more capable than the previous rule-only fallback, but frontier models are much larger and trained on much more data.
+
+The old local neural core is retained as a fallback when the generative model is unavailable.

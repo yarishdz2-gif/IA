@@ -1,11 +1,9 @@
 {
-  "name": "QyrexAI Local",
-  "version": "2.1.0",
-  "external_apis": false,
-  "parameters": 8388608,
-  "parameter_storage": "Float32Array",
-  "deployment": "Render Web Service",
-  "entrypoint": "server.js",
-  "start_command": "node server.js",
-  "server_port": "process.env.PORT"
+  "name":"QyrexAI Real",
+  "version":"3.0.0",
+  "mode":"Render Node Web Service",
+  "inference":"local Node + Transformers.js + quantized Qwen3",
+  "externalInferenceApi":false,
+  "fallback":"local neural/rule engine",
+  "model":"onnx-community/Qwen3-0.6B-DQ-ONNX"
 }
