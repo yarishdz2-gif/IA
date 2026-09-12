@@ -1,153 +1,171 @@
-import path from 'node:path';
 import os from 'node:os';
+import path from 'node:path';
 import { env, pipeline, TextStreamer } from '@huggingface/transformers';
 
 const ROOT = path.resolve(new URL('.', import.meta.url).pathname);
-const MODELS_DIR = path.join(ROOT, 'models');
-
-env.cacheDir = MODELS_DIR;
+const CACHE_DIR = path.join(ROOT, 'data', 'transformers-cache');
+env.cacheDir = CACHE_DIR;
 env.allowRemoteModels = true;
 env.allowLocalModels = false;
+env.useFSCache = true;
+env.useWasmCache = true;
 
-const MODEL_ID = process.env.QYREX_MODEL_ID || 'Mozilla/Qwen2.5-0.5B-Instruct';
-const MODEL_DTYPE = process.env.QYREX_DTYPE || 'q4';
-const MAX_TOKENS = Math.max(64, Math.min(512, Number(process.env.QYREX_MAX_TOKENS || 384)));
-const MAX_TIME = Math.max(5, Math.min(30, Number(process.env.QYREX_MAX_TIME || 18)));
-const CONTEXT_MESSAGES = Math.max(4, Math.min(16, Number(process.env.QYREX_CONTEXT_MESSAGES || 10)));
+env.backends.onnx.wasm.numThreads = Math.max(1, Math.min(Number(process.env.QYREX_THREADS || 4), Math.max(1, (os.cpus()?.length || 2) - 1)));
+
+const RAM_GB = os.totalmem() / 1024 / 1024 / 1024;
+const FORCE_MODEL = process.env.QYREX_MODEL_ID?.trim();
+const MODEL_CANDIDATES = FORCE_MODEL ? [FORCE_MODEL] : (RAM_GB >= 6 ? [
+  'onnx-community/Qwen2.5-1.5B-Instruct',
+  'onnx-community/Qwen2.5-0.5B-Instruct'
+] : [
+  'onnx-community/Qwen2.5-0.5B-Instruct',
+  'onnx-community/Qwen2.5-1.5B-Instruct'
+]);
+
+const DTYPE = process.env.QYREX_DTYPE || 'q4';
+const MAX_NEW_TOKENS = Math.min(768, Math.max(64, Number(process.env.QYREX_MAX_TOKENS || 384)));
+const HISTORY_LIMIT = Math.min(20, Math.max(4, Number(process.env.QYREX_HISTORY || 12)));
+const SYSTEM = `Eres QyrexAI, un asistente general experto y conversacional.
+Responde directamente a la pregunta del usuario. No describas que estás procesando ni inventes estados internos.
+Usa el idioma del usuario y entiende español informal, errores de escritura y mensajes cortos.
+Mantén el contexto. No repitas la misma respuesta salvo que sea necesario.
+Cuando pidan código, entrega código completo y funcional; no des fragmentos parciales si no los piden.
+Cuando depures, identifica la causa y luego entrega una solución concreta.
+Para matemáticas, calcula con precisión.
+No inventes fuentes, acciones, archivos, imágenes ni búsquedas que no hayas realizado.
+No reveles razonamiento interno privado; ofrece una explicación útil y verificable.`;
 
 let generatorPromise = null;
-let activeError = null;
+let activeModel = null;
+let loadStartedAt = 0;
+let lastError = null;
 let generationQueue = Promise.resolve();
-let lastLoadAt = null;
-let totalGenerated = 0;
 
-const SYSTEM_PROMPT = `Eres QyrexAI, un asistente útil y conversacional.
-Responde directamente a la pregunta del usuario y evita frases de estado como "estoy procesando".
-Habla naturalmente en español cuando el usuario escriba en español y cambia de idioma cuando corresponda.
-Entiende faltas de ortografía, slang y mensajes cortos.
-Da respuestas claras y prácticas. Cuando el usuario pida código, entrega código completo y ejecutable cuando sea razonable.
-Cuando depures un problema, identifica primero la causa probable y después proporciona una solución concreta.
-Para matemáticas, calcula con cuidado.
-No inventes que tienes acceso a archivos, internet o herramientas que no se hayan usado realmente.
-No muestres cadenas privadas de razonamiento interno; ofrece conclusiones y explicaciones útiles.`;
-
-function memoryGB() { return Number((os.totalmem() / 1024 / 1024 / 1024).toFixed(2)); }
-
-function normalizeMessages(messages) {
-  const input = Array.isArray(messages) ? messages : [];
-  const cleaned = input
-    .filter(m => m && ['user','assistant'].includes(m.role) && typeof m.content === 'string' && m.content.trim())
-    .slice(-CONTEXT_MESSAGES);
-  return [{ role: 'system', content: SYSTEM_PROMPT }, ...cleaned.map(m => ({role:m.role, content:m.content}))];
+function queue(task) {
+  const run = generationQueue.then(task, task);
+  generationQueue = run.catch(() => {});
+  return run;
 }
 
-async function getGenerator() {
+function cleanMessages(messages) {
+  const out = [];
+  for (const m of Array.isArray(messages) ? messages : []) {
+    if (!m || !['user','assistant'].includes(m.role)) continue;
+    const content = String(m.content ?? '').trim();
+    if (!content) continue;
+    out.push({ role: m.role, content });
+  }
+  return out.slice(-HISTORY_LIMIT);
+}
+
+async function getGenerator(progress_callback = undefined) {
   if (generatorPromise) return generatorPromise;
-  activeError = null;
   generatorPromise = (async () => {
-    await import('node:fs/promises').then(fs => fs.mkdir(MODELS_DIR, {recursive:true}));
-    lastLoadAt = new Date().toISOString();
-    const pipe = await pipeline('text-generation', MODEL_ID, { dtype: MODEL_DTYPE });
-    return pipe;
-  })().catch(err => {
-    activeError = String(err?.message || err);
+    loadStartedAt = Date.now();
+    let last = null;
+    for (const modelId of MODEL_CANDIDATES) {
+      try {
+        const pipe = await pipeline('text-generation', modelId, {
+          dtype: DTYPE,
+          device: 'wasm',
+          progress_callback
+        });
+        activeModel = modelId;
+        lastError = null;
+        return pipe;
+      } catch (err) {
+        last = err;
+        lastError = String(err?.message || err);
+        console.error('[QyrexAI] model failed:', modelId, lastError);
+      }
+    }
+    throw last || new Error('No fue posible cargar ningún modelo ONNX.');
+  })().finally(() => {
     generatorPromise = null;
-    throw err;
   });
   return generatorPromise;
 }
 
 function extractText(result) {
-  const item = result?.[0];
-  if (!item) return '';
-  const generated = item.generated_text;
+  const item = Array.isArray(result) ? result[0] : result;
+  let generated = item?.generated_text;
   if (Array.isArray(generated)) {
-    const last = [...generated].reverse().find(x => x?.role === 'assistant' && typeof x?.content === 'string');
-    return last?.content?.trim() || '';
+    const assistant = [...generated].reverse().find(x => x?.role === 'assistant');
+    if (assistant?.content) return String(assistant.content).trim();
+    const last = generated.at(-1);
+    if (typeof last === 'string') return last.trim();
   }
   if (typeof generated === 'string') return generated.trim();
   return '';
 }
 
-function enqueue(task) {
-  const run = generationQueue.then(task, task);
-  generationQueue = run.catch(() => undefined);
-  return run;
-}
+export async function streamAnswer(history, onChunk, options = {}) {
+  return queue(async () => {
+    const clean = cleanMessages(history);
+    const last = clean.at(-1);
+    if (!last || last.role !== 'user') throw new Error('Falta un mensaje de usuario válido.');
 
-export async function streamAnswer(messages, onChunk, options = {}) {
-  const normalized = normalizeMessages(messages);
-  if (normalized.length < 2) throw new Error('Falta un mensaje de usuario válido.');
+    const messages = [
+      { role: 'system', content: SYSTEM },
+      ...clean
+    ];
 
-  return enqueue(async () => {
     const generator = await getGenerator();
-    let full = '';
-    let firstTokenAt = 0;
-
+    let streamed = '';
     const streamer = new TextStreamer(generator.tokenizer, {
       skip_prompt: true,
       skip_special_tokens: true,
       callback_function(text) {
-        if (!firstTokenAt) firstTokenAt = Date.now();
         if (!text) return;
-        full += text;
+        streamed += text;
         onChunk(text);
       }
     });
 
-    const result = await generator(normalized, {
-      max_new_tokens: Math.min(MAX_TOKENS, Number(options.maxTokens || MAX_TOKENS)),
-      max_time: MAX_TIME,
-      do_sample: options.doSample !== false,
+    const result = await generator(messages, {
+      max_new_tokens: Math.min(MAX_NEW_TOKENS, Number(options.maxTokens || MAX_NEW_TOKENS)),
+      do_sample: options.doSample ?? true,
       temperature: typeof options.temperature === 'number' ? options.temperature : 0.7,
-      top_p: typeof options.topP === 'number' ? options.topP : 0.85,
-      top_k: typeof options.topK === 'number' ? options.topK : 30,
+      top_p: typeof options.topP === 'number' ? options.topP : 0.9,
       repetition_penalty: 1.08,
       no_repeat_ngram_size: 3,
       streamer
     });
 
-    let text = full.trim() || extractText(result);
-    if (!text) {
-      throw new Error(`El modelo terminó sin texto. Motor=${MODEL_ID}, dtype=${MODEL_DTYPE}.`);
-    }
+    const text = (streamed || extractText(result)).trim();
+    if (!text) throw new Error(`El modelo terminó sin texto. Modelo=${activeModel}; dtype=${DTYPE}; RAM=${RAM_GB.toFixed(1)}GB.`);
 
-    totalGenerated += 1;
     return {
       text,
-      model: MODEL_ID,
-      parameters: 500000000,
-      dtype: MODEL_DTYPE,
-      contextMessages: CONTEXT_MESSAGES,
-      maxTokens: MAX_TOKENS,
-      firstTokenMs: firstTokenAt ? firstTokenAt - (lastLoadAt ? new Date(lastLoadAt).getTime() : firstTokenAt) : null,
-      memoryGB: memoryGB()
+      model: activeModel,
+      parameters: activeModel?.includes('1.5B') ? 1500000000 : 500000000,
+      dtype: DTYPE,
+      elapsedMs: Date.now() - loadStartedAt
     };
   });
 }
 
 export async function warmup() {
-  const result = await streamAnswer(
-    [{ role: 'user', content: 'Responde únicamente con: OK' }],
-    () => {},
-    { maxTokens: 4, temperature: 0, doSample: false }
-  );
-  return result.text;
+  return streamAnswer([{ role: 'user', content: 'Di exactamente OK' }], () => {}, {
+    maxTokens: 4,
+    temperature: 0,
+    doSample: false
+  }).then(r => r.text);
 }
 
 export function llmStatus() {
   return {
-    ready: !!generatorPromise && !activeError,
-    loading: !!generatorPromise && !activeError,
-    model: MODEL_ID,
-    parameters: 500000000,
-    dtype: MODEL_DTYPE,
-    maxTokens: MAX_TOKENS,
-    maxTimeSeconds: MAX_TIME,
-    contextMessages: CONTEXT_MESSAGES,
-    memoryGB: memoryGB(),
-    totalGenerations: totalGenerated,
-    lastLoadAt,
-    error: activeError
+    ready: !!activeModel,
+    loading: !!generatorPromise,
+    model: activeModel || MODEL_CANDIDATES[0],
+    candidates: MODEL_CANDIDATES,
+    dtype: DTYPE,
+    parameters: activeModel?.includes('1.5B') ? 1500000000 : 500000000,
+    ramGB: Number(RAM_GB.toFixed(2)),
+    threads: env.backends.onnx.wasm.numThreads,
+    maxNewTokens: MAX_NEW_TOKENS,
+    historyLimit: HISTORY_LIMIT,
+    cacheDir: CACHE_DIR,
+    lastError
   };
 }

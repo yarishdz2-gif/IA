@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: qyrexai-pro-max
+    name: qyrexai-real-gen
     runtime: node
     buildCommand: npm install
     startCommand: node server.js
@@ -8,17 +8,17 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: QYREX_MODEL_ID
-        value: Mozilla/Qwen2.5-0.5B-Instruct
       - key: QYREX_DTYPE
         value: q4
       - key: QYREX_MAX_TOKENS
         value: "384"
-      - key: QYREX_MAX_TIME
-        value: "18"
-      - key: QYREX_CONTEXT_MESSAGES
-        value: "10"
+      - key: QYREX_HISTORY
+        value: "12"
+      - key: QYREX_THREADS
+        value: "4"
+      - key: TRANSFORMERS_CACHE
+        value: /opt/render/project/src/data/transformers-cache
     disk:
       name: qyrexai-data
       mountPath: /opt/render/project/src/data
-      sizeGB: 10
+      sizeGB: 8

@@ -1,10 +1,9 @@
 {
-  "name": "qyrexai-pro-max-real",
+  "name": "qyrexai-real-gen",
   "version": "8.0.0",
   "private": true,
   "type": "module",
-  "description": "QyrexAI Render-friendly local assistant with Transformers.js ONNX streaming",
   "scripts": {"start": "node server.js"},
   "engines": {"node": ">=20"},
-  "dependencies": {"@huggingface/transformers": "^4.2.0"}
+  "dependencies": {"@huggingface/transformers": "^3.8.1"}
 }

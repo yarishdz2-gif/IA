@@ -9,7 +9,7 @@ const FILES_JSON=path.join(DATA,'files.json');
 const CHATS_JSON=path.join(DATA,'conversations.json');
 const MODELS_JSON=path.join(DATA,'models.json');
 
-const defaults={conversations:[],files:[],models:[{id:'qwen25-05b',name:'Qwen2.5 0.5B Instruct',parameters:500000000,quantization:'ONNX q4',active:true,source:'Mozilla / Transformers.js'}]};
+const defaults={conversations:[],files:[],models:[{id:'qwen25-7b',name:'Qwen2.5 7B Instruct',parameters:7000000000,quantization:'Q4_K_M',active:true,source:'Hugging Face / llama.cpp'}]};
 
 async function readJson(file,fallback){try{return JSON.parse(await fs.readFile(file,'utf8'));}catch{return fallback;}}
 async function writeJson(file,value){const tmp=file+'.tmp';await fs.writeFile(tmp,JSON.stringify(value,null,2),'utf8');await fs.rename(tmp,file);}

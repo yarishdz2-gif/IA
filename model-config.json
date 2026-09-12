@@ -1,15 +1,18 @@
 {
-  "name": "QyrexAI Fast Local 0.5B",
-  "primary": "Mozilla/Qwen2.5-0.5B-Instruct",
-  "parameters": 500000000,
-  "quantization": "ONNX q4",
-  "runtime": "Transformers.js 4.2",
-  "streaming": "TextStreamer",
-  "reason": "Prioritize reliable startup and visible token streaming on Render CPU",
+  "name": "QyrexAI Real Gen 8.0",
+  "runtime": "Transformers.js + ONNX Runtime Web (WASM)",
+  "primary_auto": "onnx-community/Qwen2.5-1.5B-Instruct",
+  "fast_fallback": "onnx-community/Qwen2.5-0.5B-Instruct",
+  "dtype": "q4",
+  "parameters_primary": 1500000000,
+  "parameters_fallback": 500000000,
+  "streaming": true,
+  "chat_messages": true,
   "persistent": {
     "conversations": true,
     "files": true,
     "images": true,
     "model_cache": true
-  }
+  },
+  "diagnostics": ["/api/status", "/api/test", "/api/warmup"]
 }

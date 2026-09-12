@@ -67,7 +67,4 @@ const server=http.createServer(async(req,res)=>{
     return res.writeHead(405).end('Method Not Allowed');
   }catch(e){return json(res,500,{ok:false,error:String(e.message||e)})}
 });
-server.listen(PORT,'0.0.0.0',()=>{
-  console.log(`[QyrexAI] http://0.0.0.0:${PORT}`);
-  setTimeout(()=>{ warmup().then(()=>console.log('[QyrexAI] warmup OK')).catch(e=>console.error('[QyrexAI] warmup failed:', e?.message || e)); }, 1200);
-});
+server.listen(PORT,'0.0.0.0',()=>console.log(`[QyrexAI] http://0.0.0.0:${PORT}`));
